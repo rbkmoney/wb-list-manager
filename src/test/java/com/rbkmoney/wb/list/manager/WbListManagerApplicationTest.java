@@ -35,6 +35,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.net.URI;
 import java.util.Optional;
@@ -71,7 +72,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     public String topic;
 
     @ClassRule
-    public static GenericContainer riak = new GenericContainer("basho/riak-kv");
+    public static GenericContainer riak = new GenericContainer("basho/riak-kv")
+            .waitingFor(new WaitAllStrategy());
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
@@ -86,7 +88,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     public void init() throws InterruptedException {
         riak.start();
         // TODO add cycle for up check
-        Thread.sleep(8000L);
+        Thread.sleep(15000L);
     }
 
     @Test
