@@ -88,7 +88,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     public void init() throws InterruptedException {
         riak.start();
         // TODO add cycle for up check
-        Thread.sleep(15000L);
+        Thread.sleep(10000L);
     }
 
     @Test
