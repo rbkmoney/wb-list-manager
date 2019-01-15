@@ -59,10 +59,12 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @LocalServerPort
     int serverPort;
+
     private static String SERVICE_URL = "http://localhost:%s/v1/wb_list";
 
     @Autowired
     private ListRepository listRepository;
+
     @Autowired
     private RiakClient client;
 
@@ -90,7 +92,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     }
 
     @Test
-    public void contextLoads() throws ExecutionException, InterruptedException {
+    public void riakTest() throws ExecutionException, InterruptedException {
         Row row = new Row();
         row.setKey(KEY);
         row.setBucketName(BUCKET_NAME);

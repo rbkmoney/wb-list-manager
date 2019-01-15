@@ -19,8 +19,10 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ContextConfiguration(initializers = KafkaAbstractTest.Initializer.class)
 public abstract class KafkaAbstractTest {
 
+    public static final String KAFKA_DOCKER_VERSION = "5.0.1";
+
     @ClassRule
-    public static KafkaContainer kafka = new KafkaContainer("5.0.1").withEmbeddedZookeeper();
+    public static KafkaContainer kafka = new KafkaContainer(KAFKA_DOCKER_VERSION).withEmbeddedZookeeper();
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override

@@ -39,8 +39,7 @@ public class ListRepository implements CrudRepository<Row, String> {
                     .build();
             client.execute(storeOp);
         } catch (InterruptedException e) {
-            log.error("InterruptedException in ListRepository when create e: ", e);
-            Thread.currentThread().interrupt();
+            handleInterrupt(e, "InterruptedException in ListRepository when create e: ");
             throw new RiakExecutionException(e);
         } catch (Exception e) {
             log.error("Exception in ListRepository when create e: ", e);
@@ -55,8 +54,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             DeleteValue delete = new DeleteValue.Builder(quoteObjectLocation).build();
             client.execute(delete);
         } catch (InterruptedException e) {
-            log.error("InterruptedException in ListRepository when remove e: ", e);
-            Thread.currentThread().interrupt();
+            handleInterrupt(e, "InterruptedException in ListRepository when remove e: ");
             throw new RiakExecutionException(e);
         } catch (ExecutionException e) {
             log.error("Exception in ListRepository when remove e: ", e);
@@ -76,8 +74,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             return obj != null && obj.getValue() != null ?
                     Optional.of(new Row(bucket, key, obj.getValue().toString())) : Optional.empty();
         } catch (InterruptedException e) {
-            log.error("InterruptedException in ListRepository when get e: ", e);
-            Thread.currentThread().interrupt();
+            handleInterrupt(e, "InterruptedException in ListRepository when get e: ");
             throw new RiakExecutionException(e);
         } catch (Exception e) {
             log.error("Exception in ListRepository when get e: ", e);
@@ -88,5 +85,10 @@ public class ListRepository implements CrudRepository<Row, String> {
     private Location createLocation(String bucketName, String key) {
         Namespace quotesBucket = new Namespace(bucketName);
         return new Location(quotesBucket, key);
+    }
+
+    private void handleInterrupt(InterruptedException e, String s) {
+        log.error(s, e);
+        Thread.currentThread().interrupt();
     }
 }
