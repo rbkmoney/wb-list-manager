@@ -1,6 +1,5 @@
 package com.rbkmoney.wb.list.manager.handler;
 
-import com.rbkmoney.damsel.wb_list.ListNotFound;
 import com.rbkmoney.damsel.wb_list.WbListServiceSrv;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
@@ -16,7 +15,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     private final ListRepository listRepository;
 
     @Override
-    public boolean isExist(String partyId, String shopId, String listName, String value) throws ListNotFound, TException {
+    public boolean isExist(String partyId, String shopId, String listName, String value) throws TException {
         String bucket = KeyGenerator.generateBucket(partyId, shopId);
         String key = KeyGenerator.generateKey(listName, value);
         try {

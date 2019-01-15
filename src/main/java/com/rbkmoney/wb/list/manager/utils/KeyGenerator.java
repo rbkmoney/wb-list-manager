@@ -2,7 +2,7 @@ package com.rbkmoney.wb.list.manager.utils;
 
 public class KeyGenerator {
 
-    public static final String DELIMITER = "_";
+    private static final String DELIMITER = "_";
 
     public static String generateBucket(String partyId, String shopId) {
         return generateKeySecondField(partyId, shopId);

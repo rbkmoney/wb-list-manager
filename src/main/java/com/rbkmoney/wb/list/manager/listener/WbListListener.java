@@ -1,5 +1,7 @@
 package com.rbkmoney.wb.list.manager.listener;
 
+import com.rbkmoney.damsel.wb_list.ChangeCommand;
+import com.rbkmoney.wb.list.manager.converter.CommandToRowConverter;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +15,21 @@ import org.springframework.stereotype.Component;
 public class WbListListener {
 
     private final ListRepository listRepository;
+    private final CommandToRowConverter commandToRowConverter;
 
     @KafkaListener(topics = "${kafka.wblist.topic}", containerFactory = "kafkaListenerContainerFactory")
-    public void listen(Row row) {
-        log.info("TemplateListener ruleTemplate: {}", row);
-        listRepository.create(row);
+    public void listen(ChangeCommand command) {
+        log.info("TemplateListener ruleTemplate: {}", command);
+        Row row = commandToRowConverter.convert(command);
+        switch (command.command) {
+            case CREATE:
+                listRepository.create(row);
+                break;
+            case DELETE:
+                listRepository.remove(row);
+                break;
+            default:
+                log.warn("WbListListener command for list not found! command: {}", command);
+        }
     }
 }

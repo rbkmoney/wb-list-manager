@@ -38,13 +38,13 @@ public class ListRepository implements CrudRepository<Row, String> {
                     .withLocation(quoteObjectLocation)
                     .build();
             client.execute(storeOp);
-        } catch (ExecutionException e) {
-            log.error("Exception in ListRepository when create e: ", e);
-            throw new RiakExecutionException();
         } catch (InterruptedException e) {
-            log.error("InterruptedException in ListRepository when get e: ", e);
+            log.error("InterruptedException in ListRepository when create e: ", e);
             Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
+        } catch (Exception e) {
+            log.error("Exception in ListRepository when create e: ", e);
+            throw new RiakExecutionException();
         }
     }
 
@@ -54,12 +54,12 @@ public class ListRepository implements CrudRepository<Row, String> {
             Location quoteObjectLocation = createLocation(row.getBucketName(), row.getKey());
             DeleteValue delete = new DeleteValue.Builder(quoteObjectLocation).build();
             client.execute(delete);
+        } catch (InterruptedException e) {
+            log.error("InterruptedException in ListRepository when remove e: ", e);
+            Thread.currentThread().interrupt();
+            throw new RiakExecutionException(e);
         } catch (ExecutionException e) {
             log.error("Exception in ListRepository when remove e: ", e);
-            throw new RiakExecutionException(e);
-        } catch (InterruptedException e) {
-            log.error("InterruptedException in ListRepository when get e: ", e);
-            Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         }
     }
@@ -73,13 +73,14 @@ public class ListRepository implements CrudRepository<Row, String> {
                     .build();
             FetchValue.Response response = client.execute(fetch);
             RiakObject obj = response.getValue(RiakObject.class);
-            return Optional.of(new Row(bucket, key, obj.getValue().toString()));
-        } catch (ExecutionException e) {
-            log.error("Exception in ListRepository when get e: ", e);
-            throw new RiakExecutionException(e);
+            return obj != null && obj.getValue() != null ?
+                    Optional.of(new Row(bucket, key, obj.getValue().toString())) : Optional.empty();
         } catch (InterruptedException e) {
             log.error("InterruptedException in ListRepository when get e: ", e);
             Thread.currentThread().interrupt();
+            throw new RiakExecutionException(e);
+        } catch (Exception e) {
+            log.error("Exception in ListRepository when get e: ", e);
             throw new RiakExecutionException(e);
         }
     }
