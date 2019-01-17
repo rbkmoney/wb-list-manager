@@ -74,8 +74,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @ClassRule
     public static GenericContainer riak = new GenericContainer("basho/riak-kv")
             .withExposedPorts(8098, 8087)
-            .waitingFor(new HttpWaitStrategy().forPath("/"))
-            .withStartupTimeout(Duration.ofSeconds(120L));
+            .waitingFor(new HttpWaitStrategy().forPath(""))
+            .withStartupTimeout(Duration.ofSeconds(60L));
 
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
