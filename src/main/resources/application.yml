@@ -12,5 +12,5 @@ riak:
   port: 8087
 
 kafka:
-  bootstrap.servers: "localhost:9092"
+  bootstrap.servers: "localhost:29092"
   wblist.topic: "wblist"

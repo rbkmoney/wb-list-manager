@@ -21,7 +21,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,9 +34,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -73,7 +73,10 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @ClassRule
     public static GenericContainer riak = new GenericContainer("basho/riak-kv")
-            .waitingFor(new WaitAllStrategy());
+            .withExposedPorts(8098, 8087)
+            .waitingFor(new HttpWaitStrategy().forPath("/"))
+            .withStartupTimeout(Duration.ofSeconds(60L));
+
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
@@ -82,13 +85,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                     .of("riak.port=" + riak.getMappedPort(8087))
                     .applyTo(configurableApplicationContext.getEnvironment());
         }
-    }
-
-    @Before
-    public void init() throws InterruptedException {
-        riak.start();
-        // TODO add cycle for up check
-        Thread.sleep(10000L);
     }
 
     @Test
