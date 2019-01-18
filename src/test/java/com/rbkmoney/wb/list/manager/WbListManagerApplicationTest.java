@@ -35,9 +35,12 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -73,7 +76,12 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @ClassRule
     public static GenericContainer riak = new GenericContainer("basho/riak-kv")
-            .waitingFor(new WaitAllStrategy());
+            .withExposedPorts(8098, 8087)
+            .withPrivilegedMode(true)
+            .waitingFor(new HttpWaitStrategy()
+                    .forStatusCode(200)
+                    .forPath("/")
+                    .withStartupTimeout(Duration.ofMinutes(2)));
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
@@ -82,13 +90,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                     .of("riak.port=" + riak.getMappedPort(8087))
                     .applyTo(configurableApplicationContext.getEnvironment());
         }
-    }
-
-    @Before
-    public void init() throws InterruptedException {
-        riak.start();
-        // TODO add cycle for up check
-        Thread.sleep(10000L);
     }
 
     @Test
