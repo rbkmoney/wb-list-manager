@@ -21,6 +21,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +36,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.net.URI;
 import java.time.Duration;
@@ -74,7 +77,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @ClassRule
     public static GenericContainer riak = new GenericContainer("basho/riak-kv")
             .withExposedPorts(8098, 8087)
-            .waitingFor(new HttpWaitStrategy().forPath(""))
+            .waitingFor(new HttpWaitStrategy().forPath("/"))
             .withStartupTimeout(Duration.ofSeconds(60L));
 
 
