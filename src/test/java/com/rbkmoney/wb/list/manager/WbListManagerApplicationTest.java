@@ -78,7 +78,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
             .waitingFor(new HttpWaitStrategy()
                     .forStatusCode(200)
                     .forPath("/ping"))
-            .withStartupTimeout(Duration.ofMinutes(10));
+            .withStartupTimeout(Duration.ofMinutes(5));
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
