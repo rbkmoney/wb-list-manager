@@ -21,8 +21,9 @@
         <java.version>11</java.version>
         <server.port>8022</server.port>
         <exposed.ports>${server.port}</exposed.ports>
-        <dockerfile.base.service.tag>4fe4ba14598e34eb431ca2e5be54f98803de8109</dockerfile.base.service.tag>
+        <dockerfile.base.service.tag>81f57f9ef5e5854c27659c9f56f59cdb2b7c43e5</dockerfile.base.service.tag>
         <shared.resources.version>0.3.2</shared.resources.version>
+
         <wb.list.proto.version>1.12-1ac2751</wb.list.proto.version>
     </properties>
 
