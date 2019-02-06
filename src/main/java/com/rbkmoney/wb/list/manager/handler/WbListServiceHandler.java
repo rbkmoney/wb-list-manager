@@ -21,6 +21,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
         try {
             return listRepository.get(bucket, key).isPresent();
         } catch (RiakExecutionException e) {
+            log.error("Error when WbListServiceHandler e: ", e);
             throw new TException(e);
         }
     }

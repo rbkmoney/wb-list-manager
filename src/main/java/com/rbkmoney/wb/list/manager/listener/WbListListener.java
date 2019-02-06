@@ -20,16 +20,20 @@ public class WbListListener {
     @KafkaListener(topics = "${kafka.wblist.topic}", containerFactory = "kafkaListenerContainerFactory")
     public void listen(ChangeCommand command) {
         log.info("TemplateListener ruleTemplate: {}", command);
-        Row row = commandToRowConverter.convert(command);
-        switch (command.command) {
-            case CREATE:
-                listRepository.create(row);
-                break;
-            case DELETE:
-                listRepository.remove(row);
-                break;
-            default:
-                log.warn("WbListListener command for list not found! command: {}", command);
+        try {
+            Row row = commandToRowConverter.convert(command);
+            switch (command.command) {
+                case CREATE:
+                    listRepository.create(row);
+                    break;
+                case DELETE:
+                    listRepository.remove(row);
+                    break;
+                default:
+                    log.warn("WbListListener command for list not found! command: {}", command);
+            }
+        } catch (Exception e) {
+            log.error("Error WbListListener listen command: {} e:", command, e);
         }
     }
 }
