@@ -40,6 +40,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             client.execute(storeOp);
         } catch (InterruptedException e) {
             handleInterrupt(e, "InterruptedException in ListRepository when create e: ");
+            Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         } catch (Exception e) {
             log.error("Exception in ListRepository when create e: ", e);
@@ -55,6 +56,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             client.execute(delete);
         } catch (InterruptedException e) {
             handleInterrupt(e, "InterruptedException in ListRepository when remove e: ");
+            Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         } catch (ExecutionException e) {
             log.error("Exception in ListRepository when remove e: ", e);
@@ -75,6 +77,7 @@ public class ListRepository implements CrudRepository<Row, String> {
                     Optional.of(new Row(bucket, key, obj.getValue().toString())) : Optional.empty();
         } catch (InterruptedException e) {
             handleInterrupt(e, "InterruptedException in ListRepository when get e: ");
+            Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         } catch (Exception e) {
             log.error("Exception in ListRepository when get e: ", e);
