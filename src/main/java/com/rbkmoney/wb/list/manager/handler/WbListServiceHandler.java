@@ -16,10 +16,9 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public boolean isExist(String partyId, String shopId, String listName, String value) throws TException {
-        String bucket = KeyGenerator.generateBucket(partyId, shopId);
-        String key = KeyGenerator.generateKey(listName, value);
+        String key = KeyGenerator.generateKey(partyId, shopId, listName, value);
         try {
-            return listRepository.get(bucket, key).isPresent();
+            return listRepository.get(key).isPresent();
         } catch (RiakExecutionException e) {
             throw new TException(e);
         }

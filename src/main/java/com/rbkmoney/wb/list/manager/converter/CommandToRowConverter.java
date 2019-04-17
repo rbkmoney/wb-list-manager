@@ -14,9 +14,7 @@ public class CommandToRowConverter implements Converter<ChangeCommand, Row> {
     public Row convert(ChangeCommand command) {
         Row row = new Row();
         com.rbkmoney.damsel.wb_list.Row commandRow = command.getRow();
-        String bucket = KeyGenerator.generateBucket(commandRow.getPartyId(), commandRow.getShopId());
-        row.setBucketName(bucket);
-        String key = KeyGenerator.generateKey(commandRow.getListName(), commandRow.getValue());
+        String key = KeyGenerator.generateKey(commandRow.getPartyId(), commandRow.getShopId(), commandRow.getListName(), commandRow.getValue());
         row.setKey(key);
         row.setValue(commandRow.getValue());
         return row;

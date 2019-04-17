@@ -32,11 +32,11 @@ public class WbListServiceHandlerTest {
     public void isExist() throws TException {
         Row value = new Row();
         value.setValue(VALUE);
-        Mockito.when(listRepository.get(anyString(), anyString())).thenReturn(Optional.of(value));
+        Mockito.when(listRepository.get(anyString())).thenReturn(Optional.of(value));
         boolean exist = wbListServiceHandler.isExist("partyId", "shopId", "listName", "value");
         Assert.assertTrue(exist);
 
-        Mockito.when(listRepository.get(anyString(), anyString())).thenReturn(Optional.empty());
+        Mockito.when(listRepository.get(anyString())).thenReturn(Optional.empty());
         exist = wbListServiceHandler.isExist("partyId", "shopId", "listName", "value");
         Assert.assertFalse(exist);
     }

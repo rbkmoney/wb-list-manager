@@ -13,6 +13,7 @@ import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
 import com.rbkmoney.wb.list.manager.model.Row;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -26,13 +27,17 @@ public class ListRepository implements CrudRepository<Row, String> {
     private static final String TEXT_PLAIN = "text/plain";
     private final RiakClient client;
 
+    @Value("${riak.bucket}")
+    private String bucket;
+
     @Override
     public void create(Row row) {
         try {
+            log.debug("ListRepository get bucket: {} row: {}", bucket, row);
             RiakObject quoteObject = new RiakObject()
                     .setContentType(TEXT_PLAIN)
                     .setValue(BinaryValue.create(row.getValue()));
-            Location quoteObjectLocation = createLocation(row.getBucketName(), row.getKey());
+            Location quoteObjectLocation = createLocation(bucket, row.getKey());
             StoreValue storeOp = new StoreValue.Builder(quoteObject)
                     .withOption(StoreValue.Option.W, Quorum.oneQuorum())
                     .withLocation(quoteObjectLocation)
@@ -51,7 +56,8 @@ public class ListRepository implements CrudRepository<Row, String> {
     @Override
     public void remove(Row row) {
         try {
-            Location quoteObjectLocation = createLocation(row.getBucketName(), row.getKey());
+            log.debug("ListRepository get bucket: {} row: {}", bucket, row);
+            Location quoteObjectLocation = createLocation(bucket, row.getKey());
             DeleteValue delete = new DeleteValue.Builder(quoteObjectLocation).build();
             client.execute(delete);
         } catch (InterruptedException e) {
@@ -65,8 +71,9 @@ public class ListRepository implements CrudRepository<Row, String> {
     }
 
     @Override
-    public Optional<Row> get(String bucket, String key) {
+    public Optional<Row> get(String key) {
         try {
+            log.debug("ListRepository get bucket: {} key: {}", bucket, key);
             Location quoteObjectLocation = createLocation(bucket, key);
             FetchValue fetch = new FetchValue.Builder(quoteObjectLocation)
                     .withOption(FetchValue.Option.R, new Quorum(3))
@@ -74,7 +81,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             FetchValue.Response response = client.execute(fetch);
             RiakObject obj = response.getValue(RiakObject.class);
             return obj != null && obj.getValue() != null ?
-                    Optional.of(new Row(bucket, key, obj.getValue().toString())) : Optional.empty();
+                    Optional.of(new Row(key, obj.getValue().toString())) : Optional.empty();
         } catch (InterruptedException e) {
             handleInterrupt(e, "InterruptedException in ListRepository when get e: ");
             Thread.currentThread().interrupt();

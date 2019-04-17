@@ -10,6 +10,7 @@ management.metrics.export.statsd:
 riak:
   address: localhost
   port: 8087
+  bucket: wblist
 
 kafka:
   bootstrap.servers: "localhost:29092"

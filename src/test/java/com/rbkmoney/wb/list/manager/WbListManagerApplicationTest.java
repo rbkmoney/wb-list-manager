@@ -52,7 +52,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListManagerApplicationTest.Initializer.class)
 public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
-    private static final String BUCKET_NAME = "bucketName";
     private static final String VALUE = "value";
     private static final String KEY = "key";
     private static final String SHOP_ID = "shopId";
@@ -72,7 +71,9 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @Value("${kafka.wblist.topic.command}")
     public String topic;
-
+    
+    @Value("${riak.bucket}")
+    private String BUCKET_NAME;
 
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
@@ -99,7 +100,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     public void riakTest() throws ExecutionException, InterruptedException {
         Row row = new Row();
         row.setKey(KEY);
-        row.setBucketName(BUCKET_NAME);
         row.setValue(VALUE);
         listRepository.create(row);
 
@@ -112,7 +112,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         String result = obj.getValue().toString();
         Assert.assertEquals(VALUE, result);
 
-        Optional<Row> resultGet = listRepository.get(BUCKET_NAME, KEY);
+        Optional<Row> resultGet = listRepository.get(KEY);
         Assert.assertFalse(resultGet.isEmpty());
         Assert.assertEquals(VALUE, resultGet.get().getValue());
 

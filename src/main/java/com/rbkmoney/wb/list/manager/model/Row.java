@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Row {
 
-    private String bucketName;
     private String key;
     private String value;
 
