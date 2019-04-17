@@ -28,7 +28,7 @@ public class CommandSerializer implements Serializer<ChangeCommandWrapper> {
                     .addFilter("myFilter", theFilter);
             retVal = om.writer(filters).writeValueAsString(data).getBytes();
         } catch (Exception e) {
-            log.error("Error when serialize CommandSerializer data: {} ", data, e);
+            log.error("Error when serialize ThriftSerializer data: {} ", data, e);
         }
         return retVal;
     }

@@ -13,4 +13,6 @@ riak:
 
 kafka:
   bootstrap.servers: "localhost:29092"
-  wblist.topic: "wblist"
+  wblist.topic:
+    command: "wb-list-command"
+    event.sink: "wb-list-event-sink"

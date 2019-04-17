@@ -7,18 +7,21 @@ import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
 import com.rbkmoney.damsel.wb_list.ChangeCommand;
 import com.rbkmoney.damsel.wb_list.Command;
+import com.rbkmoney.damsel.wb_list.Event;
 import com.rbkmoney.damsel.wb_list.WbListServiceSrv;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
+import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
-import com.rbkmoney.wb.list.manager.utils.CommandSerializer;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -38,8 +41,7 @@ import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -68,8 +70,12 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @Autowired
     private RiakClient client;
 
-    @Value("${kafka.wblist.topic}")
+    @Value("${kafka.wblist.topic.command}")
     public String topic;
+
+
+    @Value("${kafka.wblist.topic.event.sink}")
+    public String topicEventSink;
 
     @ClassRule
     public static GenericContainer riak = new GenericContainer("basho/riak-kv")
@@ -126,7 +132,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
         Producer<String, ChangeCommand> producer = createProducer();
         ChangeCommand changeCommand = createCommand();
-        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getValue(), changeCommand);
+        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
@@ -136,32 +142,50 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
         producer = createProducer();
         changeCommand.setCommand(Command.DELETE);
-        producerRecord = new ProducerRecord<>(topic, changeCommand.getValue(), changeCommand);
+        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
 
         exist = iface.isExist(PARTY_ID, SHOP_ID, LIST_NAME, VALUE);
         Assert.assertFalse(exist);
+
+        Consumer<String, Event> consumer = createConsumer();
+        consumer.subscribe(Collections.singletonList(topicEventSink));
+
+        List<Event> eventList = new ArrayList<>();
+        ConsumerRecords<String, Event> consumerRecords =
+                consumer.poll(Duration.ofSeconds(1));
+        consumerRecords.forEach(record -> {
+            log.info("poll message: {}", record.value());
+            eventList.add(record.value());});
+        consumer.close();
+
+        Assert.assertEquals(2, eventList.size());
     }
 
     @NotNull
     private ChangeCommandWrapper createCommand() {
         ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
         changeCommand.setCommand(Command.CREATE);
-        changeCommand.setShopId(SHOP_ID);
-        changeCommand.setPartyId(PARTY_ID);
-        changeCommand.setListName(LIST_NAME);
-        changeCommand.setValue(VALUE);
+        com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
+        row.setShopId(SHOP_ID);
+        row.setPartyId(PARTY_ID);
+        row.setListName(LIST_NAME);
+        row.setValue(VALUE);
+        changeCommand.setRow(row);
         return changeCommand;
     }
 
-    public static Producer<String, ChangeCommand> createProducer() {
+    public static Consumer<String, Event> createConsumer() {
         Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
-        props.put(ProducerConfig.CLIENT_ID_CONFIG, "CLIENT");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, CommandSerializer.class);
-        return new KafkaProducer<>(props);
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "CLIENT");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        return new KafkaConsumer<>(props);
     }
+
 }

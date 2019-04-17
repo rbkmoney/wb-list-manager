@@ -23,7 +23,9 @@
         <exposed.ports>${server.port}</exposed.ports>
         <dockerfile.base.service.tag>4f3b89c6381373923f5fdea18b08741b9bada1e6</dockerfile.base.service.tag>
         <shared.resources.version>0.3.2</shared.resources.version>
-        <wb.list.proto.version>1.12-1ac2751</wb.list.proto.version>
+        <wb.list.proto.version>1.15-7aca611</wb.list.proto.version>
+        <kafka.streams.version>2.1.0</kafka.streams.version>
+        <kafka.clients.version>2.1.0</kafka.clients.version>
     </properties>
 
     <dependencies>
@@ -86,14 +88,23 @@
         <!--kafka-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-streams</artifactId>
+            <version>${kafka.streams.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.1.0</version>
+            <version>${kafka.clients.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
             <version>2.2.2.RELEASE</version>
             <exclusions>
+                <exclusion>
+                    <groupId>org.apache.kafka</groupId>
+                    <artifactId>kafka-streams</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.apache.kafka</groupId>
                     <artifactId>kafka-clients</artifactId>
