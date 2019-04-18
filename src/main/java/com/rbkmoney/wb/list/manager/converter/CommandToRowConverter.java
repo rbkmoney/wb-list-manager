@@ -13,11 +13,10 @@ public class CommandToRowConverter implements Converter<ChangeCommand, Row> {
     @Override
     public Row convert(ChangeCommand command) {
         Row row = new Row();
-        String bucket = KeyGenerator.generateBucket(command.getPartyId(), command.getShopId());
-        row.setBucketName(bucket);
-        String key = KeyGenerator.generateKey(command.getListName(), command.getValue());
+        com.rbkmoney.damsel.wb_list.Row commandRow = command.getRow();
+        String key = KeyGenerator.generateKey(commandRow);
         row.setKey(key);
-        row.setValue(command.getValue());
+        row.setValue(commandRow.getValue());
         return row;
     }
 }

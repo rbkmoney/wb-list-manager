@@ -1,19 +1,22 @@
 package com.rbkmoney.wb.list.manager.utils;
 
+import com.rbkmoney.damsel.wb_list.Row;
+
 public class KeyGenerator {
 
     private static final String DELIMITER = "_";
 
-    public static String generateBucket(String partyId, String shopId) {
-        return generateKeySecondField(partyId, shopId);
+    public static String generateKey(Row row) {
+        return row.getPartyId() +
+                DELIMITER +
+                row.getShopId() +
+                DELIMITER +
+                row.getListType() +
+                DELIMITER +
+                row.getListName() +
+                DELIMITER +
+                row.getValue();
     }
 
-    public static String generateKey(String type, String key) {
-        return generateKeySecondField(type, key);
-    }
-
-    private static String generateKeySecondField(String first, String second) {
-        return first + DELIMITER + second;
-    }
 
 }

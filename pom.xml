@@ -21,9 +21,12 @@
         <java.version>11</java.version>
         <server.port>8022</server.port>
         <exposed.ports>${server.port}</exposed.ports>
-        <dockerfile.base.service.tag>4f3b89c6381373923f5fdea18b08741b9bada1e6</dockerfile.base.service.tag>
-        <shared.resources.version>0.3.2</shared.resources.version>
-        <wb.list.proto.version>1.12-1ac2751</wb.list.proto.version>
+        <dockerfile.base.service.tag>bc95d0d6dc13c693acd2b274531a7d604b877bf3</dockerfile.base.service.tag>
+        <dockerfile.registry>dr2.rbkmoney.com</dockerfile.registry>
+        <shared.resources.version>0.3.6</shared.resources.version>
+        <wb.list.proto.version>1.20-2c2fb6a</wb.list.proto.version>
+        <kafka.streams.version>2.1.0</kafka.streams.version>
+        <kafka.clients.version>2.1.0</kafka.clients.version>
     </properties>
 
     <dependencies>
@@ -86,14 +89,23 @@
         <!--kafka-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-streams</artifactId>
+            <version>${kafka.streams.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.1.0</version>
+            <version>${kafka.clients.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
             <version>2.2.2.RELEASE</version>
             <exclusions>
+                <exclusion>
+                    <groupId>org.apache.kafka</groupId>
+                    <artifactId>kafka-streams</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.apache.kafka</groupId>
                     <artifactId>kafka-clients</artifactId>

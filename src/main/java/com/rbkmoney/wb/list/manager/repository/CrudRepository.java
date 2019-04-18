@@ -10,6 +10,6 @@ public interface CrudRepository<T, K> {
 
     void remove(T row);
 
-    Optional<Row> get(String bucket, K key);
+    Optional<Row> get(K key);
 
 }
