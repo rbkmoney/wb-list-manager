@@ -1,5 +1,6 @@
 package com.rbkmoney.wb.list.manager.handler;
 
+import com.rbkmoney.damsel.wb_list.ListType;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.apache.thrift.TException;
@@ -17,6 +18,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 public class WbListServiceHandlerTest {
 
     public static final String VALUE = "value";
+    public static final String PARTY_ID = "partyId";
+    public static final String SHOP_ID = "shopId";
+    public static final String LIST_NAME = "listName";
     WbListServiceHandler wbListServiceHandler;
 
     @Mock
@@ -33,11 +37,17 @@ public class WbListServiceHandlerTest {
         Row value = new Row();
         value.setValue(VALUE);
         Mockito.when(listRepository.get(anyString())).thenReturn(Optional.of(value));
-        boolean exist = wbListServiceHandler.isExist("partyId", "shopId", "listName", "value");
+        com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
+        row.setPartyId(PARTY_ID);
+        row.setShopId(SHOP_ID);
+        row.setListType(ListType.black);
+        row.setListName(LIST_NAME);
+        row.setValue(VALUE);
+        boolean exist = wbListServiceHandler.isExist(row);
         Assert.assertTrue(exist);
 
         Mockito.when(listRepository.get(anyString())).thenReturn(Optional.empty());
-        exist = wbListServiceHandler.isExist("partyId", "shopId", "listName", "value");
+        exist = wbListServiceHandler.isExist(row);
         Assert.assertFalse(exist);
     }
 }

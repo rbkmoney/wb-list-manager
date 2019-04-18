@@ -5,10 +5,7 @@ import com.basho.riak.client.api.commands.kv.FetchValue;
 import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
-import com.rbkmoney.damsel.wb_list.ChangeCommand;
-import com.rbkmoney.damsel.wb_list.Command;
-import com.rbkmoney.damsel.wb_list.Event;
-import com.rbkmoney.damsel.wb_list.WbListServiceSrv;
+import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
@@ -137,7 +134,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         producer.close();
         Thread.sleep(1000L);
 
-        boolean exist = iface.isExist(PARTY_ID, SHOP_ID, LIST_NAME, VALUE);
+        boolean exist = iface.isExist(changeCommand.getRow());
         Assert.assertTrue(exist);
 
         producer = createProducer();
@@ -147,7 +144,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         producer.close();
         Thread.sleep(1000L);
 
-        exist = iface.isExist(PARTY_ID, SHOP_ID, LIST_NAME, VALUE);
+        exist = iface.isExist(changeCommand.getRow());
         Assert.assertFalse(exist);
 
         Consumer<String, Event> consumer = createConsumer();
@@ -172,6 +169,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         row.setShopId(SHOP_ID);
         row.setPartyId(PARTY_ID);
         row.setListName(LIST_NAME);
+        row.setListType(ListType.black);
         row.setValue(VALUE);
         changeCommand.setRow(row);
         return changeCommand;
