@@ -43,9 +43,7 @@ public class WbListStreamFactory {
                     .peek((s, changeCommand) -> log.debug("Command stream check command: {}", changeCommand))
                     .mapValues(this::apply)
                     .to(resultTopic, Produced.with(Serdes.String(), eventSerde));
-            KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration);
-            kafkaStreams.start();
-            return kafkaStreams;
+            return new KafkaStreams(builder.build(), streamsConfiguration);
         } catch (Exception e) {
             log.error("WbListStreamFactory error when create stream e: ", e);
             throw new RuntimeException(e);

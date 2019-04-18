@@ -24,7 +24,8 @@ public class StartupListener implements ApplicationListener<ContextRefreshedEven
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         kafkaStreams = wbListStreamFactory.create(wbListStreamProperties);
-        log.info("StartupListener start stream kafkaStreams: ", kafkaStreams.allMetadata());
+        kafkaStreams.start();
+        log.info("StartupListener start stream kafkaStreams: {}", kafkaStreams.allMetadata());
     }
 
     public void stop() {
