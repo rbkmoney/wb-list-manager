@@ -62,10 +62,9 @@ public class WbListStreamFactory {
                 listRepository.remove(row);
                 event.setEventType(EventType.DELETED);
                 break;
-            default: {
+            default:
                 log.warn("WbListStreamFactory command for list not found! command: {}", command);
                 throw new RuntimeException("WbListStreamFactory command for list not found!");
-            }
         }
         event.setRow(command.getRow());
         return event;

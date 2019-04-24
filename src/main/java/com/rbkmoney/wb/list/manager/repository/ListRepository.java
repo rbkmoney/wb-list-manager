@@ -33,7 +33,7 @@ public class ListRepository implements CrudRepository<Row, String> {
     @Override
     public void create(Row row) {
         try {
-            log.debug("ListRepository get bucket: {} row: {}", bucket, row);
+            log.debug("ListRepository create in bucket: {} row: {}", bucket, row);
             RiakObject quoteObject = new RiakObject()
                     .setContentType(TEXT_PLAIN)
                     .setValue(BinaryValue.create(row.getValue()));
@@ -44,7 +44,7 @@ public class ListRepository implements CrudRepository<Row, String> {
                     .build();
             client.execute(storeOp);
         } catch (InterruptedException e) {
-            handleInterrupt(e, "InterruptedException in ListRepository when create e: ");
+            log.error("InterruptedException in ListRepository when create e: ", e);
             Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         } catch (Exception e) {
@@ -56,12 +56,12 @@ public class ListRepository implements CrudRepository<Row, String> {
     @Override
     public void remove(Row row) {
         try {
-            log.debug("ListRepository get bucket: {} row: {}", bucket, row);
+            log.debug("ListRepository remove from bucket: {} row: {}", bucket, row);
             Location quoteObjectLocation = createLocation(bucket, row.getKey());
             DeleteValue delete = new DeleteValue.Builder(quoteObjectLocation).build();
             client.execute(delete);
         } catch (InterruptedException e) {
-            handleInterrupt(e, "InterruptedException in ListRepository when remove e: ");
+            log.error("InterruptedException in ListRepository when remove e: ", e);
             Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         } catch (ExecutionException e) {
@@ -83,7 +83,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             return obj != null && obj.getValue() != null ?
                     Optional.of(new Row(key, obj.getValue().toString())) : Optional.empty();
         } catch (InterruptedException e) {
-            handleInterrupt(e, "InterruptedException in ListRepository when get e: ");
+            log.error("InterruptedException in ListRepository when get e: ", e);
             Thread.currentThread().interrupt();
             throw new RiakExecutionException(e);
         } catch (Exception e) {
@@ -95,10 +95,5 @@ public class ListRepository implements CrudRepository<Row, String> {
     private Location createLocation(String bucketName, String key) {
         Namespace quotesBucket = new Namespace(bucketName);
         return new Location(quotesBucket, key);
-    }
-
-    private void handleInterrupt(InterruptedException e, String s) {
-        log.error(s, e);
-        Thread.currentThread().interrupt();
     }
 }

@@ -1,11 +1,15 @@
 package com.rbkmoney.wb.list.manager;
 
-import com.rbkmoney.wb.list.manager.serializer.ThriftSerializer;
+import com.rbkmoney.serializer.ThriftSerializer;
+import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
@@ -19,6 +23,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.KafkaContainer;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Properties;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -46,18 +52,27 @@ public abstract class KafkaAbstractTest {
         }
 
         @NotNull
-        private <T> Producer<String, T> initTopic(String topicName) {
-            Producer<String, T> producer = createProducer();
-            ProducerRecord<String, T> producerRecord = new ProducerRecord<>(topicName,
-                    "test", null);
+        private <T> Consumer<String, T> initTopic(String topicName) {
+            Consumer<String, T> consumer = createConsumer();
             try {
-                producer.send(producerRecord).get();
+                consumer.subscribe(Collections.singletonList(topicName));
+                consumer.poll(Duration.ofSeconds(1));
             } catch (Exception e) {
                 log.error("KafkaAbstractTest initialize e: ", e);
             }
-            producer.close();
-            return producer;
+            consumer.close();
+            return consumer;
         }
+    }
+
+    public static <T> Consumer<String, T> createConsumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        return new KafkaConsumer<>(props);
     }
 
     public static <T> Producer<String, T> createProducer() {
@@ -68,6 +83,5 @@ public abstract class KafkaAbstractTest {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ThriftSerializer.class);
         return new KafkaProducer<>(props);
     }
-
 
 }

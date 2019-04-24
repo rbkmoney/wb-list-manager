@@ -1,12 +1,14 @@
 package com.rbkmoney.wb.list.manager;
 
 import com.basho.riak.client.api.RiakClient;
+import com.basho.riak.client.api.RiakException;
 import com.basho.riak.client.api.commands.kv.FetchValue;
 import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
 import com.rbkmoney.damsel.geo_ip.SubdivisionInfo;
 import com.rbkmoney.damsel.wb_list.*;
+import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
@@ -23,11 +25,14 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.ApplicationContextInitializer;
@@ -41,15 +46,17 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+@Ignore
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListManagerApplicationTest.Initializer.class)
-public class WbListManagerApplicationTest extends KafkaAbstractTest {
+@ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListSafetyApplicationTest.Initializer.class)
+public class WbListSafetyApplicationTest extends KafkaAbstractTest {
 
     private static final String VALUE = "value";
     private static final String KEY = "key";
@@ -57,16 +64,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     private static final String PARTY_ID = "partyId";
     private static final String LIST_NAME = "listName";
 
-    @LocalServerPort
-    int serverPort;
-
-    private static String SERVICE_URL = "http://localhost:%s/v1/wb_list";
-
-    @Autowired
+    @MockBean
     private ListRepository listRepository;
-
-    @Autowired
-    private RiakClient client;
 
     @Value("${kafka.wblist.topic.command}")
     public String topic;
@@ -77,90 +76,42 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
 
-    @ClassRule
-    public static GenericContainer riak = new GenericContainer("basho/riak-kv")
-            .withExposedPorts(8098, 8087)
-            .withPrivilegedMode(true)
-            .waitingFor(new HttpWaitStrategy()
-                    .forStatusCode(200)
-                    .forPath("/ping"))
-            .withStartupTimeout(Duration.ofMinutes(5));
-
-    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-        @Override
-        public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
-            TestPropertyValues
-                    .of("riak.port=" + riak.getMappedPort(8087))
-                    .applyTo(configurableApplicationContext.getEnvironment());
-        }
-    }
-
     @Test
-    public void riakTest() throws ExecutionException, InterruptedException {
-        Row row = new Row();
-        row.setKey(KEY);
-        row.setValue(VALUE);
-        listRepository.create(row);
+    public void kafkaRowTestException() throws Exception {
 
-        Namespace ns = new Namespace(BUCKET_NAME);
-        Location location = new Location(ns, KEY);
-        FetchValue fv = new FetchValue.Builder(location).build();
-        FetchValue.Response response = client.execute(fv);
-        RiakObject obj = response.getValue(RiakObject.class);
-
-        String result = obj.getValue().toString();
-        Assert.assertEquals(VALUE, result);
-
-        Optional<Row> resultGet = listRepository.get(KEY);
-        Assert.assertFalse(resultGet.isEmpty());
-        Assert.assertEquals(VALUE, resultGet.get().getValue());
-
-        listRepository.remove(row);
-        response = client.execute(fv);
-        obj = response.getValue(RiakObject.class);
-        Assert.assertNull(obj);
-
-    }
-
-    @Test
-    public void kafkaRowTest() throws Exception {
-        THClientBuilder clientBuilder = new THClientBuilder()
-                .withAddress(new URI(String.format(SERVICE_URL, serverPort)))
-                .withNetworkTimeout(300000);
-        WbListServiceSrv.Iface iface = clientBuilder.build(WbListServiceSrv.Iface.class);
-
-        Producer<String, ChangeCommand> producer = createProducer();
-        ChangeCommand changeCommand = createCommand();
-        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        Producer<String, SubdivisionInfo> producer = createProducer();
+        SubdivisionInfo subdivisionInfo = new SubdivisionInfo();
+        subdivisionInfo.setLevel((short) 1);
+        subdivisionInfo.setSubdivisionName("asd");
+        ProducerRecord<String, SubdivisionInfo> producerRecord = new ProducerRecord<>(topic, "test", subdivisionInfo);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
-
-        boolean exist = iface.isExist(changeCommand.getRow());
-        Assert.assertTrue(exist);
 
         producer = createProducer();
-        changeCommand.setCommand(Command.DELETE);
-        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producerRecord = new ProducerRecord<>(topic, "twerwerest", subdivisionInfo);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
 
-        exist = iface.isExist(changeCommand.getRow());
-        Assert.assertFalse(exist);
+        doThrow(new RiakExecutionException()).when(listRepository).create(any());
 
-        Consumer<String, Event> consumer = createConsumer();
-        consumer.subscribe(Collections.singletonList(topicEventSink));
+        Producer<String, ChangeCommand> producerNew = createProducer();
+        ChangeCommand changeCommand = createCommand();
+        changeCommand.setCommand(Command.CREATE);
+        ProducerRecord<String, ChangeCommand> producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producerNew.send(producerRecordCommand).get();
+        producerNew.close();
+        Thread.sleep(1000L);
 
-        List<Event> eventList = new ArrayList<>();
-        ConsumerRecords<String, Event> consumerRecords =
-                consumer.poll(Duration.ofSeconds(1));
-        consumerRecords.forEach(record -> {
-            log.info("poll message: {}", record.value());
-            eventList.add(record.value());});
-        consumer.close();
+        producerNew = createProducer();
+        changeCommand = createCommand();
+        changeCommand.setCommand(Command.DELETE);
+        producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producerNew.send(producerRecordCommand).get();
+        producerNew.close();
+        Thread.sleep(1000L);
 
-        Assert.assertEquals(2, eventList.size());
     }
 
     @NotNull
