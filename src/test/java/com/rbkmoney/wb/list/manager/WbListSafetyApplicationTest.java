@@ -1,51 +1,32 @@
 package com.rbkmoney.wb.list.manager;
 
-import com.basho.riak.client.api.RiakClient;
-import com.basho.riak.client.api.RiakException;
-import com.basho.riak.client.api.commands.kv.FetchValue;
-import com.basho.riak.client.core.query.Location;
-import com.basho.riak.client.core.query.Namespace;
-import com.basho.riak.client.core.query.RiakObject;
-import com.rbkmoney.damsel.geo_ip.SubdivisionInfo;
-import com.rbkmoney.damsel.wb_list.*;
+import com.rbkmoney.damsel.wb_list.ChangeCommand;
+import com.rbkmoney.damsel.wb_list.Command;
+import com.rbkmoney.damsel.wb_list.Event;
+import com.rbkmoney.damsel.wb_list.ListType;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
-import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
-import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 
-import java.net.URI;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.Properties;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -56,6 +37,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@TestPropertySource(properties = {"retry.timeout=100"})
 @ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListSafetyApplicationTest.Initializer.class)
 public class WbListSafetyApplicationTest extends KafkaAbstractTest {
 
@@ -80,7 +62,9 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
     @Test
     public void kafkaRowTestException() throws Exception {
 
-        doThrow(new RiakExecutionException()).when(listRepository).create(any());
+        doThrow(new RiakExecutionException(),
+                new RiakExecutionException(),
+                new RiakExecutionException()).when(listRepository).create(any());
 
         Producer<String, ChangeCommand> producerNew = createProducer();
         ChangeCommand changeCommand = createCommand();
@@ -88,7 +72,7 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         ProducerRecord<String, ChangeCommand> producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producerNew.send(producerRecordCommand).get();
         producerNew.close();
-        Thread.sleep(5000L);
+        Thread.sleep(2000L);
 
         Mockito.verify(listRepository, times(3)).create(any());
     }
