@@ -33,16 +33,14 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-//@Ignore
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = {"retry.timeout=100"})
-@ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListSafetyApplicationTest.Initializer.class)
+@ContextConfiguration(classes = WbListManagerApplication.class)
 public class WbListSafetyApplicationTest extends KafkaAbstractTest {
 
     private static final String VALUE = "value";
-    private static final String KEY = "key";
     private static final String SHOP_ID = "shopId";
     private static final String PARTY_ID = "partyId";
     private static final String LIST_NAME = "listName";
