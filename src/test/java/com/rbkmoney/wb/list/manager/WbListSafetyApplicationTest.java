@@ -21,6 +21,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -46,6 +47,7 @@ import static org.mockito.Mockito.times;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = {"retry.timeout=100"})
