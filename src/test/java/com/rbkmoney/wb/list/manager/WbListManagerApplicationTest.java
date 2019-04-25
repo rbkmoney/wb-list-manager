@@ -83,7 +83,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
             .withPrivilegedMode(true)
             .waitingFor(new HttpWaitStrategy()
                     .forStatusCode(200)
-                    .forPort(8087)
+                    .forPort(8098)
                     .forPath("/ping"))
             .withStartupTimeout(Duration.ofMinutes(5));
 
