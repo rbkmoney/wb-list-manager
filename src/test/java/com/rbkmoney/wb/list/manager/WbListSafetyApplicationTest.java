@@ -49,9 +49,10 @@ import java.util.concurrent.ExecutionException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@Ignore
+//@Ignore
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -79,21 +80,6 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
     @Test
     public void kafkaRowTestException() throws Exception {
 
-        Producer<String, SubdivisionInfo> producer = createProducer();
-        SubdivisionInfo subdivisionInfo = new SubdivisionInfo();
-        subdivisionInfo.setLevel((short) 1);
-        subdivisionInfo.setSubdivisionName("asd");
-        ProducerRecord<String, SubdivisionInfo> producerRecord = new ProducerRecord<>(topic, "test", subdivisionInfo);
-        producer.send(producerRecord).get();
-        producer.close();
-        Thread.sleep(1000L);
-
-        producer = createProducer();
-        producerRecord = new ProducerRecord<>(topic, "twerwerest", subdivisionInfo);
-        producer.send(producerRecord).get();
-        producer.close();
-        Thread.sleep(1000L);
-
         doThrow(new RiakExecutionException()).when(listRepository).create(any());
 
         Producer<String, ChangeCommand> producerNew = createProducer();
@@ -102,16 +88,9 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         ProducerRecord<String, ChangeCommand> producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producerNew.send(producerRecordCommand).get();
         producerNew.close();
-        Thread.sleep(1000L);
+        Thread.sleep(5000L);
 
-        producerNew = createProducer();
-        changeCommand = createCommand();
-        changeCommand.setCommand(Command.DELETE);
-        producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producerNew.send(producerRecordCommand).get();
-        producerNew.close();
-        Thread.sleep(1000L);
-
+        Mockito.verify(listRepository, times(3)).create(any());
     }
 
     @NotNull
