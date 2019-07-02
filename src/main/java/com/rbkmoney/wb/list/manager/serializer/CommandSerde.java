@@ -2,12 +2,11 @@ package com.rbkmoney.wb.list.manager.serializer;
 
 
 import com.rbkmoney.damsel.wb_list.ChangeCommand;
-import com.rbkmoney.serializer.ThriftSerializer;
+import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.Map;
 

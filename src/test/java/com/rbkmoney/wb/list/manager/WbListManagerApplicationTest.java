@@ -48,8 +48,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListManagerApplicationTest.Initializer.class)
-public class WbListManagerApplicationTest extends KafkaAbstractTest {
+@ContextConfiguration(classes = WbListManagerApplication.class)
+public class WbListManagerApplicationTest extends AbstractRiakIntegrationTest {
 
     private static final String VALUE = "value";
     private static final String KEY = "key";
@@ -76,25 +76,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
-
-    @ClassRule
-    public static GenericContainer riak = new GenericContainer("basho/riak-kv")
-            .withExposedPorts(8098, 8087)
-            .withPrivilegedMode(true)
-            .waitingFor(new HttpWaitStrategy()
-                    .forStatusCode(200)
-                    .forPort(8098)
-                    .forPath("/ping"))
-            .withStartupTimeout(Duration.ofMinutes(5));
-
-    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-        @Override
-        public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
-            TestPropertyValues
-                    .of("riak.port=" + riak.getMappedPort(8087))
-                    .applyTo(configurableApplicationContext.getEnvironment());
-        }
-    }
 
     @Test
     public void riakTest() throws ExecutionException, InterruptedException {
