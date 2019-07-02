@@ -1,11 +1,18 @@
-server.port: @server.port@
-management.security.flag: false
-spring.application.name: @project.name@
-info.version: @project.version@
-info.stage: dev
-
-management.metrics.export.statsd:
-  flavor: etsy
+port: @server.port@
+management:
+  security:
+    flag: false
+  metrics:
+    export:
+      statsd:
+        flavor: etsy
+        enabled: false
+spring:
+  application:
+    name: @project.name@
+  output:
+    ansi:
+      enabled: always
 
 riak:
   address: localhost

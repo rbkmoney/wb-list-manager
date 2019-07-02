@@ -19,7 +19,7 @@ public class WbListManagerApplication extends SpringApplication {
     private RiakClient client;
 
     public static void main(String[] args) {
-        SpringApplication.run(WbListManagerApplication.class);
+        SpringApplication.run(WbListManagerApplication.class, args);
     }
 
     @PreDestroy
