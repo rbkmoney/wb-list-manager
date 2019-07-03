@@ -1,4 +1,6 @@
 port: @server.port@
+servlet:
+  context-path: "/wb_list/v1"
 management:
   security:
     flag: false
@@ -32,7 +34,6 @@ kafka:
     enable: false
     keystore-location: src/main/resources/cert/kenny-k.struzhkin.p12
     keystore-password: kenny
-
     key-password: kenny
     server-password: kenny12
     server-keystore-location: src/main/resources/cert/truststore.p12
