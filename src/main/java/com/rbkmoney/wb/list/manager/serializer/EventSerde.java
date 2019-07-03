@@ -2,6 +2,7 @@ package com.rbkmoney.wb.list.manager.serializer;
 
 
 import com.rbkmoney.damsel.wb_list.Event;
+import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;

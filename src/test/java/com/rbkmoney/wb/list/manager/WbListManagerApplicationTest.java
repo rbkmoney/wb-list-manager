@@ -5,6 +5,7 @@ import com.basho.riak.client.api.commands.kv.FetchValue;
 import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
+import com.rbkmoney.damsel.geo_ip.SubdivisionInfo;
 import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
@@ -40,13 +41,14 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ContextConfiguration(classes = WbListManagerApplication.class, initializers = WbListManagerApplicationTest.Initializer.class)
+@ContextConfiguration(classes = WbListManagerApplication.class)
 public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     private static final String VALUE = "value";
@@ -58,13 +60,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @LocalServerPort
     int serverPort;
 
-    private static String SERVICE_URL = "http://localhost:%s/v1/wb_list";
-
-    @Autowired
-    private ListRepository listRepository;
-
-    @Autowired
-    private RiakClient client;
+    private static String SERVICE_URL = "http://localhost:%s/wb_list/v1";
 
     @Value("${kafka.wblist.topic.command}")
     public String topic;
@@ -74,51 +70,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
-
-    @ClassRule
-    public static GenericContainer riak = new GenericContainer("basho/riak-kv")
-            .withExposedPorts(8098, 8087)
-            .withPrivilegedMode(true)
-            .waitingFor(new HttpWaitStrategy()
-                    .forStatusCode(200)
-                    .forPath("/ping"))
-            .withStartupTimeout(Duration.ofMinutes(5));
-
-    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-        @Override
-        public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
-            TestPropertyValues
-                    .of("riak.port=" + riak.getMappedPort(8087))
-                    .applyTo(configurableApplicationContext.getEnvironment());
-        }
-    }
-
-    @Test
-    public void riakTest() throws ExecutionException, InterruptedException {
-        Row row = new Row();
-        row.setKey(KEY);
-        row.setValue(VALUE);
-        listRepository.create(row);
-
-        Namespace ns = new Namespace(BUCKET_NAME);
-        Location location = new Location(ns, KEY);
-        FetchValue fv = new FetchValue.Builder(location).build();
-        FetchValue.Response response = client.execute(fv);
-        RiakObject obj = response.getValue(RiakObject.class);
-
-        String result = obj.getValue().toString();
-        Assert.assertEquals(VALUE, result);
-
-        Optional<Row> resultGet = listRepository.get(KEY);
-        Assert.assertFalse(resultGet.isEmpty());
-        Assert.assertEquals(VALUE, resultGet.get().getValue());
-
-        listRepository.remove(row);
-        response = client.execute(fv);
-        obj = response.getValue(RiakObject.class);
-        Assert.assertNull(obj);
-
-    }
 
     @Test
     public void kafkaRowTest() throws Exception {
@@ -165,14 +116,20 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     private ChangeCommandWrapper createCommand() {
         ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
         changeCommand.setCommand(Command.CREATE);
+        com.rbkmoney.damsel.wb_list.Row row = createRow();
+        changeCommand.setRow(row);
+        return changeCommand;
+    }
+
+    @NotNull
+    private com.rbkmoney.damsel.wb_list.Row createRow() {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
         row.setShopId(SHOP_ID);
         row.setPartyId(PARTY_ID);
         row.setListName(LIST_NAME);
         row.setListType(ListType.black);
         row.setValue(VALUE);
-        changeCommand.setRow(row);
-        return changeCommand;
+        return row;
     }
 
     public static Consumer<String, Event> createConsumer() {

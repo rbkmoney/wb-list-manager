@@ -1,19 +1,37 @@
-server.port: @server.port@
-management.security.flag: false
-spring.application.name: @project.name@
-info.version: @project.version@
-info.stage: dev
-
-management.metrics.export.statsd:
-  flavor: etsy
+port: @server.port@
+management:
+  security:
+    flag: false
+  metrics:
+    export:
+      statsd:
+        flavor: etsy
+        enabled: false
+spring:
+  application:
+    name: @project.name@
+  output:
+    ansi:
+      enabled: always
 
 riak:
   address: localhost
   port: 8087
   bucket: wblist
 
+retry:
+  timeout: 2000
+  max.attempts: 3
+
 kafka:
   bootstrap.servers: "localhost:29092"
   wblist.topic:
     command: "wb-list-command"
     event.sink: "wb-list-event-sink"
+  ssl:
+    enable: false
+    keystore-location: src/main/resources/cert/kenny-k.struzhkin.p12
+    keystore-password: kenny
+    key-password: kenny
+    server-password: kenny12
+    server-keystore-location: src/main/resources/cert/truststore.p12

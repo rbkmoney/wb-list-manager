@@ -4,8 +4,10 @@ import com.rbkmoney.wb.list.manager.stream.WbListStreamFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KafkaStreams;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -18,6 +20,7 @@ public class StartupListener implements ApplicationListener<ContextRefreshedEven
 
     private final WbListStreamFactory wbListStreamFactory;
     private final Properties wbListStreamProperties;
+    private final KafkaListenerEndpointRegistry registry;
 
     private KafkaStreams kafkaStreams;
 
@@ -29,7 +32,8 @@ public class StartupListener implements ApplicationListener<ContextRefreshedEven
     }
 
     public void stop() {
-        kafkaStreams.close(Duration.ofSeconds(60L));
+        kafkaStreams.close(Duration.ofSeconds(1L));
+        registry.stop();
     }
 
 }
