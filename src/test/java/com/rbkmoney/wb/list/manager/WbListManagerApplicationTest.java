@@ -49,7 +49,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ContextConfiguration(classes = WbListManagerApplication.class)
-public class WbListManagerApplicationTest extends AbstractRiakIntegrationTest {
+public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     private static final String VALUE = "value";
     private static final String KEY = "key";
@@ -62,12 +62,6 @@ public class WbListManagerApplicationTest extends AbstractRiakIntegrationTest {
 
     private static String SERVICE_URL = "http://localhost:%s/v1/wb_list";
 
-    @Autowired
-    private ListRepository listRepository;
-
-    @Autowired
-    private RiakClient client;
-
     @Value("${kafka.wblist.topic.command}")
     public String topic;
     
@@ -76,33 +70,6 @@ public class WbListManagerApplicationTest extends AbstractRiakIntegrationTest {
 
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
-
-    @Test
-    public void riakTest() throws ExecutionException, InterruptedException {
-        Row row = new Row();
-        row.setKey(KEY);
-        row.setValue(VALUE);
-        listRepository.create(row);
-
-        Namespace ns = new Namespace(BUCKET_NAME);
-        Location location = new Location(ns, KEY);
-        FetchValue fv = new FetchValue.Builder(location).build();
-        FetchValue.Response response = client.execute(fv);
-        RiakObject obj = response.getValue(RiakObject.class);
-
-        String result = obj.getValue().toString();
-        Assert.assertEquals(VALUE, result);
-
-        Optional<Row> resultGet = listRepository.get(KEY);
-        Assert.assertFalse(resultGet.isEmpty());
-        Assert.assertEquals(VALUE, resultGet.get().getValue());
-
-        listRepository.remove(row);
-        response = client.execute(fv);
-        obj = response.getValue(RiakObject.class);
-        Assert.assertNull(obj);
-
-    }
 
     @Test
     public void kafkaRowTest() throws Exception {

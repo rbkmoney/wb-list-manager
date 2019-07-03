@@ -41,7 +41,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = {"retry.timeout=100"})
 @ContextConfiguration(classes = WbListManagerApplication.class)
-public class WbListSafetyApplicationTest extends AbstractRiakIntegrationTest {
+public class WbListSafetyApplicationTest extends KafkaAbstractTest {
 
     private static final String VALUE = "value";
     private static final String SHOP_ID = "shopId";

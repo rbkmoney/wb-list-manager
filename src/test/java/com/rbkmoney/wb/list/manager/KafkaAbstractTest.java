@@ -32,9 +32,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @ContextConfiguration(initializers = KafkaAbstractTest.Initializer.class)
-public abstract class KafkaAbstractTest {
+public abstract class KafkaAbstractTest extends AbstractRiakIntegrationTest {
 
     public static final String KAFKA_DOCKER_VERSION = "5.0.1";
 
