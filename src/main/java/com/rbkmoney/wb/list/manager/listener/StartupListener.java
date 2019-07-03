@@ -20,11 +20,9 @@ public class StartupListener implements ApplicationListener<ContextRefreshedEven
 
     private final WbListStreamFactory wbListStreamFactory;
     private final Properties wbListStreamProperties;
+    private final KafkaListenerEndpointRegistry registry;
 
     private KafkaStreams kafkaStreams;
-
-    @Autowired
-    private KafkaListenerEndpointRegistry registry;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -34,7 +32,7 @@ public class StartupListener implements ApplicationListener<ContextRefreshedEven
     }
 
     public void stop() {
-        kafkaStreams.close(Duration.ofSeconds(10L));
+        kafkaStreams.close(Duration.ofSeconds(1L));
         registry.stop();
     }
 

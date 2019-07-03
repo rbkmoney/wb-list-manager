@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 
 @SpringBootTest
 @ContextConfiguration(classes = {ListRepository.class, RiakConfig.class})
-public class RiakTest extends AbstractRiakIntegrationTest {
+public class RiakTest extends KafkaAbstractTest {
 
     private static final String VALUE = "value";
     private static final String KEY = "key";
