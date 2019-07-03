@@ -41,7 +41,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestPropertySource(properties = {"retry.timeout=100"})
 @ContextConfiguration(classes = WbListManagerApplication.class)
-public class WbListSafetyApplicationTest extends KafkaAbstractTest {
+public class WbListSafetyApplicationTest extends AbstractRiakIntegrationTest {
 
     private static final String VALUE = "value";
     private static final String SHOP_ID = "shopId";
@@ -71,10 +71,10 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
 
     @Test
     public void kafkaRowTestException() throws Exception {
-
         doThrow(new RiakExecutionException(),
-                new RiakExecutionException(),
-                new RiakExecutionException()).when(listRepository).create(any());
+                new RiakExecutionException())
+                .doNothing()
+                .when(listRepository).create(any());
 
         Producer<String, ChangeCommand> producerNew = createProducer();
         ChangeCommand changeCommand = createCommand();
@@ -82,6 +82,7 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         ProducerRecord<String, ChangeCommand> producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producerNew.send(producerRecordCommand).get();
         producerNew.close();
+
         Thread.sleep(2000L);
 
         Mockito.verify(listRepository, times(3)).create(any());
@@ -106,7 +107,6 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         row.setValue(VALUE);
         return row;
     }
-
 
     public static <T> Consumer<String, T> createConsumer() {
         Properties props = new Properties();
