@@ -1,6 +1,4 @@
 port: @server.port@
-servlet:
-  context-path: "/wb_list/v1"
 management:
   security:
     flag: false

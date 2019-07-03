@@ -60,7 +60,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @LocalServerPort
     int serverPort;
 
-    private static String SERVICE_URL = "http://localhost:%s/v1/wb_list";
+    private static String SERVICE_URL = "http://localhost:%s/wb_list/v1";
 
     @Value("${kafka.wblist.topic.command}")
     public String topic;
