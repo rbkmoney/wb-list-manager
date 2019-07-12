@@ -56,14 +56,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public boolean isNotOneExist(List<Row> list) throws TException {
-        if (list != null && !list.isEmpty()) {
-            for (Row row : list) {
-                if (isExist(row)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return !isAnyExist(list);
     }
 
 }
