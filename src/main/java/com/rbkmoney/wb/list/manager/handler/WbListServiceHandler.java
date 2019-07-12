@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TException;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 public class WbListServiceHandler implements WbListServiceSrv.Iface {
@@ -23,6 +25,42 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
         } catch (RiakExecutionException e) {
             throw new TException(e);
         }
+    }
+
+    @Override
+    public boolean isAllExist(List<Row> list) throws TException {
+        if (list != null && !list.isEmpty()) {
+            for (Row row : list) {
+                if (!isExist(row)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean isAnyExist(List<Row> list) throws TException {
+        if (list != null && !list.isEmpty()) {
+            for (Row row : list) {
+                if (isExist(row)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isNotOneExist(List<Row> list) throws TException {
+        if (list != null && !list.isEmpty()) {
+            for (Row row : list) {
+                if (isExist(row)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 }
