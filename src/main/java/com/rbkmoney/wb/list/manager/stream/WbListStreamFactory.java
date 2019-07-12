@@ -36,7 +36,7 @@ public class WbListStreamFactory {
             StreamsBuilder builder = new StreamsBuilder();
             builder.stream(readTopic, Consumed.with(Serdes.String(), commandSerde))
                     .filter((s, changeCommand) -> changeCommand != null && changeCommand.getCommand() != null)
-                    .peek((s, changeCommand) -> log.debug("Command stream check command: {}", changeCommand))
+                    .peek((s, changeCommand) -> log.info("Command stream check command: {}", changeCommand))
                     .mapValues(command ->
                             retryTemplate.execute(args -> commandService.apply(command)))
                     .to(resultTopic, Produced.with(Serdes.String(), eventSerde));

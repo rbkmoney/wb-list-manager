@@ -21,8 +21,11 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     public boolean isExist(Row row) throws TException {
         String key = KeyGenerator.generateKey(row);
         try {
-            return listRepository.get(key).isPresent();
+            boolean present = listRepository.get(key).isPresent();
+            log.info("WbListServiceHandler isExist row: {} result: {}", row, present);
+            return present;
         } catch (RiakExecutionException e) {
+            log.info("WbListServiceHandler error when isExist row: {} e: ", row, e);
             throw new TException(e);
         }
     }
