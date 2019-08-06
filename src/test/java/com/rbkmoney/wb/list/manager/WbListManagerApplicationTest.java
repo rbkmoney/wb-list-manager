@@ -126,8 +126,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-//        row.setShopId(SHOP_ID);
-//        row.setPartyId(PARTY_ID);
+        row.setShopId(SHOP_ID);
+        row.setPartyId(PARTY_ID);
         row.setListName(LIST_NAME);
         row.setListType(ListType.black);
         row.setValue(VALUE);
