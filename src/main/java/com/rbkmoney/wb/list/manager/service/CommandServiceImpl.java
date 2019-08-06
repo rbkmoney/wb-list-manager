@@ -20,9 +20,10 @@ public class CommandServiceImpl implements CommandService {
 
     @Override
     public Event apply(ChangeCommand command) {
-        log.debug("WbListStreamFactory apply command: {}", command);
+        log.info("WbListStreamFactory apply command: {}", command);
         Event event = new Event();
         Row row = commandToRowConverter.convert(command);
+        log.info("WbListStreamFactory apply row: {}", row);
         switch (command.command) {
             case CREATE:
                 listRepository.create(row);
