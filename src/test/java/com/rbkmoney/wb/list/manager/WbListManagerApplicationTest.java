@@ -1,14 +1,6 @@
 package com.rbkmoney.wb.list.manager;
 
-import com.basho.riak.client.api.RiakClient;
-import com.basho.riak.client.api.commands.kv.FetchValue;
-import com.basho.riak.client.core.query.Location;
-import com.basho.riak.client.core.query.Namespace;
-import com.basho.riak.client.core.query.RiakObject;
-import com.rbkmoney.damsel.geo_ip.SubdivisionInfo;
 import com.rbkmoney.damsel.wb_list.*;
-import com.rbkmoney.wb.list.manager.model.Row;
-import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
@@ -22,26 +14,20 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -110,6 +96,22 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         consumer.close();
 
         Assert.assertEquals(2, eventList.size());
+
+        producer = createProducer();
+        changeCommand = createCommand();
+        Row row = changeCommand.getRow();
+        row.setShopId(null);
+        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producer.send(producerRecord).get();
+        producer.close();
+        Thread.sleep(1000L);
+
+        exist = iface.isExist(row);
+        Assert.assertTrue(exist);
+
+        row.setShopId(SHOP_ID);
+        exist = iface.isExist(row);
+        Assert.assertTrue(exist);
     }
 
     @NotNull

@@ -19,13 +19,18 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public boolean isExist(Row row) throws TException {
-        String key = KeyGenerator.generateKey(row);
+        return checkExist(KeyGenerator.generateKey(row.list_type, row.list_name, row.value))
+                || checkExist(KeyGenerator.generateKey(row.party_id, row.list_type, row.list_name, row.value))
+                || checkExist(KeyGenerator.generateKey(row));
+    }
+
+    private boolean checkExist(String key) throws TException {
         try {
             boolean present = listRepository.get(key).isPresent();
-            log.info("WbListServiceHandler isExist row: {} result: {}", row, present);
+            log.info("WbListServiceHandler isExist key: {} result: {}", key, present);
             return present;
         } catch (RiakExecutionException e) {
-            log.info("WbListServiceHandler error when isExist row: {} e: ", row, e);
+            log.info("WbListServiceHandler error when isExist key: {} e: ", key, e);
             throw new TException(e);
         }
     }
@@ -56,14 +61,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public boolean isNotOneExist(List<Row> list) throws TException {
-        if (list != null && !list.isEmpty()) {
-            for (Row row : list) {
-                if (isExist(row)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return !isAnyExist(list);
     }
 
 }
