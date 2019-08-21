@@ -1,5 +1,6 @@
 package com.rbkmoney.wb.list.manager.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbkmoney.damsel.wb_list.ListType;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
@@ -31,7 +32,7 @@ public class WbListServiceHandlerTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        wbListServiceHandler = new WbListServiceHandler(listRepository);
+        wbListServiceHandler = new WbListServiceHandler(listRepository, new ObjectMapper());
     }
 
     @Test

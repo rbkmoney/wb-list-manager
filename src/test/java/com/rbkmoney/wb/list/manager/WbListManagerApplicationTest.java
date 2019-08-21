@@ -12,6 +12,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,6 +25,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +67,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         WbListServiceSrv.Iface iface = clientBuilder.build(WbListServiceSrv.Iface.class);
 
         Producer<String, ChangeCommand> producer = createProducer();
-        ChangeCommand changeCommand = createCommand();
+        ChangeCommand changeCommand = createCommand(createRow());
         ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
@@ -98,8 +100,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         Assert.assertEquals(2, eventList.size());
 
         producer = createProducer();
-        changeCommand = createCommand();
-        Row row = changeCommand.getRow();
+        Row row = createRow();
+        changeCommand = createCommand(row);
         row.setShopId(null);
         producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
@@ -112,13 +114,34 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         row.setShopId(SHOP_ID);
         exist = iface.isExist(row);
         Assert.assertTrue(exist);
+
+        RowInfo rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString());
+        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+
+        rowInfo = checkCreateWithCountInfo(iface, null);
+
+        Assert.assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
+    }
+
+    private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount) throws InterruptedException, java.util.concurrent.ExecutionException, TException {
+        Producer<String, ChangeCommand> producer;
+        ChangeCommand changeCommand;
+        ProducerRecord<String, ChangeCommand> producerRecord;
+        producer = createProducer();
+        Row rowWithCountInfo = createRowWithCountInfo(startTimeCount);
+        changeCommand = createCommand(rowWithCountInfo);
+        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producer.send(producerRecord).get();
+        producer.close();
+        Thread.sleep(1000L);
+
+        return iface.getRowInfo(rowWithCountInfo);
     }
 
     @NotNull
-    private ChangeCommandWrapper createCommand() {
+    private ChangeCommandWrapper createCommand(com.rbkmoney.damsel.wb_list.Row row) {
         ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
         changeCommand.setCommand(Command.CREATE);
-        com.rbkmoney.damsel.wb_list.Row row = createRow();
         changeCommand.setRow(row);
         return changeCommand;
     }
@@ -131,6 +154,23 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         row.setListName(LIST_NAME);
         row.setListType(ListType.black);
         row.setValue(VALUE);
+        return row;
+    }
+
+    @NotNull
+    private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount) {
+        com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
+        row.setShopId(SHOP_ID);
+        row.setPartyId(PARTY_ID);
+        row.setListName(LIST_NAME);
+        row.setListType(ListType.black);
+        row.setValue(VALUE);
+        row.setRowInfo(RowInfo.count_info(
+                new CountInfo()
+                        .setCount(5L)
+                        .setStartCountTime(startTimeCount)
+                        .setTimeToLive(Instant.now().plusSeconds(6000L).toString()))
+        );
         return row;
     }
 
