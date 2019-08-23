@@ -69,22 +69,22 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     }
 
     @Override
-    public RowInfo getRowInfo(Row row) throws ListNotFound, TException {
+    public Result getRowInfo(Row row) throws ListNotFound, TException {
         String key = KeyGenerator.generateKey(row);
         Optional<com.rbkmoney.wb.list.manager.model.Row> result = listRepository.get(key);
         if (result.isPresent()) {
             try {
                 CountInfoModel countInfoModel = objectMapper.readValue(result.get().getValue(), CountInfoModel.class);
-                return RowInfo.count_info(new CountInfo()
+                return new Result().setRowInfo(RowInfo.count_info(new CountInfo()
                         .setCount(countInfoModel.getCount())
                         .setTimeToLive(countInfoModel.getTtl())
                         .setStartCountTime(countInfoModel.getStartCountTime())
-                );
+                ));
             } catch (IOException e) {
                 log.error("Error when parse count info for key: {} e: ", key, e);
             }
         }
-        return new RowInfo();
+        return new Result();
     }
 
 }

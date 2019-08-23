@@ -115,6 +115,9 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         exist = iface.isExist(row);
         Assert.assertTrue(exist);
 
+        Result info = iface.getRowInfo(row);
+        Assert.assertFalse(info.getRowInfo() != null);
+
         RowInfo rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString());
         Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
 
@@ -135,7 +138,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         producer.close();
         Thread.sleep(1000L);
 
-        return iface.getRowInfo(rowWithCountInfo);
+        return iface.getRowInfo(rowWithCountInfo).getRowInfo();
     }
 
     @NotNull

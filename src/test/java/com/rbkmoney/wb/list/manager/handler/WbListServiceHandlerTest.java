@@ -2,6 +2,8 @@ package com.rbkmoney.wb.list.manager.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbkmoney.damsel.wb_list.ListType;
+import com.rbkmoney.damsel.wb_list.Result;
+import com.rbkmoney.damsel.wb_list.RowInfo;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.apache.thrift.TException;
@@ -44,6 +46,13 @@ public class WbListServiceHandlerTest {
         Mockito.when(listRepository.get(anyString())).thenReturn(Optional.empty());
         exist = wbListServiceHandler.isExist(row);
         Assert.assertFalse(exist);
+    }
+
+    @Test
+    public void getRowInfo() throws TException {
+        com.rbkmoney.damsel.wb_list.Row row = createRow();
+        Result result = wbListServiceHandler.getRowInfo(row);
+        Assert.assertFalse(result == null);
     }
 
     @Test
