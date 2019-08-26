@@ -71,10 +71,9 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     @Override
     public Result getRowInfo(Row row) throws ListNotFound, TException {
         log.info("WbListServiceHandler getRowInfo row: {}", row);
-        String key = KeyGenerator.generateKey(row);
-        Optional<com.rbkmoney.wb.list.manager.model.Row> result = listRepository.get(key);
+        Optional<com.rbkmoney.wb.list.manager.model.Row> result = getCascadeRow(row);
         if (result.isPresent()) {
-            log.info("WbListServiceHandler getRowInfo key: {} result: {} isPresent=true!", key, result);
+            log.info("WbListServiceHandler getRowInfo result: {} isPresent=true!", result);
             try {
                 CountInfoModel countInfoModel = objectMapper.readValue(result.get().getValue(), CountInfoModel.class);
                 return new Result().setRowInfo(RowInfo.count_info(new CountInfo()
@@ -83,11 +82,22 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
                         .setStartCountTime(countInfoModel.getStartCountTime())
                 ));
             } catch (IOException e) {
-                log.error("Error when parse count info for key: {} e: ", key, e);
+                log.error("Error when parse count info for row: {} e: ", row, e);
             }
         }
-        log.info("WbListServiceHandler getRowInfo key: {} result: {} not present!", key, result);
+        log.info("WbListServiceHandler getRowInfo row: {} result: {} not present!", row, result);
         return new Result();
+    }
+
+    private Optional<com.rbkmoney.wb.list.manager.model.Row> getCascadeRow(Row row) {
+        if (row.getListType() != ListType.grey) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(
+                listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value))
+                        .orElse(listRepository.get(KeyGenerator.generateKey(row.party_id, row.list_type, row.list_name, row.value))
+                                .orElse(listRepository.get(KeyGenerator.generateKey(row))
+                                        .orElse(null))));
     }
 
 }

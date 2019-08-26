@@ -73,7 +73,7 @@ public class ListRepository implements CrudRepository<Row, String> {
     @Override
     public Optional<Row> get(String key) {
         try {
-            log.debug("ListRepository get bucket: {} key: {}", bucket, key);
+            log.info("ListRepository get bucket: {} key: {}", bucket, key);
             Location quoteObjectLocation = createLocation(bucket, key);
             FetchValue fetch = new FetchValue.Builder(quoteObjectLocation)
                     .withOption(FetchValue.Option.R, new Quorum(3))
