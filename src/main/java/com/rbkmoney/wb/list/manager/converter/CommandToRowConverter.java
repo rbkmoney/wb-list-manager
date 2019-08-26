@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-
 
 @Component
 @RequiredArgsConstructor
@@ -34,10 +32,9 @@ public class CommandToRowConverter implements Converter<ChangeCommand, Row> {
         if (commandRow.isSetRowInfo() && commandRow.getRowInfo().isSetCountInfo()) {
             try {
                 CountInfo countInfo = commandRow.getRowInfo().getCountInfo();
-                String startCountTime = countInfo.isSetStartCountTime() ? countInfo.getStartCountTime() : Instant.now().toString();
                 CountInfoModel countInfoModel = new CountInfoModel(countInfo.getCount(),
                         countInfo.getTimeToLive(),
-                        startCountTime);
+                        countInfo.getStartCountTime());
                 return objectMapper.writeValueAsString(countInfoModel);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);

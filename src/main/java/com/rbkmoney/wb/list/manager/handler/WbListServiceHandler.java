@@ -70,9 +70,11 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public Result getRowInfo(Row row) throws ListNotFound, TException {
+        log.info("WbListServiceHandler getRowInfo row: {}", row);
         String key = KeyGenerator.generateKey(row);
         Optional<com.rbkmoney.wb.list.manager.model.Row> result = listRepository.get(key);
         if (result.isPresent()) {
+            log.info("WbListServiceHandler getRowInfo key: {} result: {} isPresent=true!", key, result);
             try {
                 CountInfoModel countInfoModel = objectMapper.readValue(result.get().getValue(), CountInfoModel.class);
                 return new Result().setRowInfo(RowInfo.count_info(new CountInfo()
@@ -84,6 +86,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
                 log.error("Error when parse count info for key: {} e: ", key, e);
             }
         }
+        log.info("WbListServiceHandler getRowInfo key: {} result: {} not present!", key, result);
         return new Result();
     }
 
