@@ -121,7 +121,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         RowInfo rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString());
         Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
 
-        rowInfo = checkCreateWithCountInfo(iface, null);
+        rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString());
 
         Assert.assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
     }
