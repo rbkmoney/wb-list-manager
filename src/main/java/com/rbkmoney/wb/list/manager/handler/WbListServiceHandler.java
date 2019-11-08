@@ -3,6 +3,7 @@ package com.rbkmoney.wb.list.manager.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.wb.list.manager.constant.RowType;
+import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
 import com.rbkmoney.wb.list.manager.exception.UnknownRowTypeException;
 import com.rbkmoney.wb.list.manager.model.CountInfoModel;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
@@ -24,8 +25,12 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public boolean isExist(Row row) throws TException {
-        return getCascadeRow(row)
-                .isPresent();
+        try {
+            return getCascadeRow(row).isPresent();
+        } catch (RiakExecutionException | UnknownRowTypeException e) {
+            log.error("WbListServiceHandler error when isExist row: {} e: ", row, e);
+            throw new TException(e);
+        }
     }
 
     @Override
