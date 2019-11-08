@@ -102,7 +102,9 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         producer = createProducer();
         Row row = createRow();
         changeCommand = createCommand(row);
-        row.setShopId(null);
+        row.getId().getPaymentId()
+                .setShopId(null);
+
         producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
@@ -111,7 +113,9 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         exist = iface.isExist(row);
         Assert.assertTrue(exist);
 
-        row.setShopId(SHOP_ID);
+        row.getId().getPaymentId()
+                .setShopId(SHOP_ID);
+
         exist = iface.isExist(row);
         Assert.assertTrue(exist);
 
@@ -171,8 +175,10 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-        row.setShopId(SHOP_ID);
-        row.setPartyId(PARTY_ID);
+        row.setId(IdInfo.payment_id(new PaymentId()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID)
+        ));
         row.setListName(LIST_NAME);
         row.setListType(ListType.black);
         row.setValue(VALUE);
@@ -182,8 +188,10 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId, String shopId) {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-        row.setShopId(shopId);
-        row.setPartyId(partyId);
+        row.setId(IdInfo.payment_id(new PaymentId()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID)
+        ));
         row.setListName(LIST_NAME);
         row.setListType(ListType.grey);
         row.setValue(VALUE);

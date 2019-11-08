@@ -1,29 +1,35 @@
 package com.rbkmoney.wb.list.manager.utils;
 
 import com.rbkmoney.damsel.wb_list.ListType;
-import com.rbkmoney.damsel.wb_list.Row;
+import com.rbkmoney.damsel.wb_list.P2pId;
+import com.rbkmoney.damsel.wb_list.PaymentId;
+import com.rbkmoney.wb.list.manager.constant.RowType;
+import com.rbkmoney.wb.list.manager.exception.UnknownRowTypeException;
 import org.springframework.util.StringUtils;
 
 public class KeyGenerator {
 
     private static final String DELIMITER = "_";
 
-    public static String generateKey(String partyId, ListType listType, String listName, String value) {
-        return generateKey(partyId, null, listType, listName, value);
+    public static String generateKey(com.rbkmoney.damsel.wb_list.Row row) {
+        if (row.getId().isSetPaymentId()) {
+            PaymentId paymentId = row.getId().getPaymentId();
+            return generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(), paymentId.getShopId());
+        } else if (row.getId().isSetP2pId()) {
+            P2pId p2pId = row.getId().getP2pId();
+            return generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P, p2pId.getIdentityId());
+        }
+        throw new UnknownRowTypeException();
     }
 
-    public static String generateKey(ListType listType, String listName, String value) {
-        return generateKey(null, null, listType, listName, value);
-    }
-
-    public static String generateKey(Row row) {
-        return generateKey(row.getPartyId(), row.getShopId(), row.getListType(), row.getListName(), row.getValue());
-    }
-
-    private static String generateKey(String partyId, String shopId, ListType listType, String listName, String value) {
+    public static String generateKey(ListType listType, String listName, String value, String... params) {
         StringBuilder stringBuilder = new StringBuilder();
-        addIfExist(partyId, stringBuilder);
-        return addIfExist(shopId, stringBuilder)
+        if (params != null) {
+            for (String param : params) {
+                addIfExist(param, stringBuilder);
+            }
+        }
+        return stringBuilder
                 .append(listType)
                 .append(DELIMITER)
                 .append(listName)

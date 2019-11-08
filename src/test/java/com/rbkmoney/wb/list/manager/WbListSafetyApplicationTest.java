@@ -1,8 +1,6 @@
 package com.rbkmoney.wb.list.manager;
 
-import com.rbkmoney.damsel.wb_list.ChangeCommand;
-import com.rbkmoney.damsel.wb_list.Command;
-import com.rbkmoney.damsel.wb_list.ListType;
+import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
@@ -100,8 +98,10 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-        row.setShopId(SHOP_ID);
-        row.setPartyId(PARTY_ID);
+        row.setId(IdInfo.payment_id(new PaymentId()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID))
+        );
         row.setListName(LIST_NAME);
         row.setListType(ListType.black);
         row.setValue(VALUE);

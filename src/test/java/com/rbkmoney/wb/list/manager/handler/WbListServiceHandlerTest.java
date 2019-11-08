@@ -1,9 +1,10 @@
 package com.rbkmoney.wb.list.manager.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rbkmoney.damsel.wb_list.IdInfo;
 import com.rbkmoney.damsel.wb_list.ListType;
+import com.rbkmoney.damsel.wb_list.PaymentId;
 import com.rbkmoney.damsel.wb_list.Result;
-import com.rbkmoney.damsel.wb_list.RowInfo;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.apache.thrift.TException;
@@ -116,8 +117,10 @@ public class WbListServiceHandlerTest {
         value.setValue(VALUE);
         Mockito.when(listRepository.get(anyString())).thenReturn(Optional.of(value));
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-        row.setPartyId(PARTY_ID);
-        row.setShopId(SHOP_ID);
+        row.setId(IdInfo.payment_id(new PaymentId()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID)
+        ));
         row.setListType(ListType.black);
         row.setListName(LIST_NAME);
         row.setValue(VALUE);
