@@ -2,7 +2,9 @@ package com.rbkmoney.wb.list.manager.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbkmoney.damsel.wb_list.*;
+import com.rbkmoney.wb.list.manager.constant.RowType;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
+import com.rbkmoney.wb.list.manager.exception.UnknownRowTypeException;
 import com.rbkmoney.wb.list.manager.model.CountInfoModel;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import com.rbkmoney.wb.list.manager.utils.KeyGenerator;
@@ -23,18 +25,10 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
 
     @Override
     public boolean isExist(Row row) throws TException {
-        return checkExist(KeyGenerator.generateKey(row.list_type, row.list_name, row.value))
-                || checkExist(KeyGenerator.generateKey(row.party_id, row.list_type, row.list_name, row.value))
-                || checkExist(KeyGenerator.generateKey(row));
-    }
-
-    private boolean checkExist(String key) throws TException {
         try {
-            boolean present = listRepository.get(key).isPresent();
-            log.info("WbListServiceHandler isExist key: {} result: {}", key, present);
-            return present;
-        } catch (RiakExecutionException e) {
-            log.info("WbListServiceHandler error when isExist key: {} e: ", key, e);
+            return getCascadeRow(row).isPresent();
+        } catch (RiakExecutionException | UnknownRowTypeException e) {
+            log.error("WbListServiceHandler error when isExist row: {} e: ", row, e);
             throw new TException(e);
         }
     }
@@ -72,7 +66,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     public Result getRowInfo(Row row) throws ListNotFound, TException {
         log.info("WbListServiceHandler getRowInfo row: {}", row);
         Optional<com.rbkmoney.wb.list.manager.model.Row> result = getCascadeRow(row);
-        if (result.isPresent()) {
+        if (result.isPresent() && row.getListType() == ListType.grey) {
             log.info("WbListServiceHandler getRowInfo result: {} isPresent=true!", result);
             try {
                 CountInfoModel countInfoModel = objectMapper.readValue(result.get().getValue(), CountInfoModel.class);
@@ -90,14 +84,21 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     }
 
     private Optional<com.rbkmoney.wb.list.manager.model.Row> getCascadeRow(Row row) {
-        if (row.getListType() != ListType.grey) {
-            return Optional.empty();
+        if (row.getId().isSetPaymentId()) {
+            PaymentId paymentId = row.getId().getPaymentId();
+            return Optional.ofNullable(
+                    listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue()))
+                            .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId()))
+                                    .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(), paymentId.getShopId()))
+                                            .orElse(null))));
+        } else if (row.getId().isSetP2pId()) {
+            P2pId p2pId = row.getId().getP2pId();
+            return Optional.ofNullable(
+                    listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P))
+                            .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P, p2pId.getIdentityId()))
+                                    .orElse(null)));
         }
-        return Optional.ofNullable(
-                listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value))
-                        .orElse(listRepository.get(KeyGenerator.generateKey(row.party_id, row.list_type, row.list_name, row.value))
-                                .orElse(listRepository.get(KeyGenerator.generateKey(row))
-                                        .orElse(null))));
+        throw new UnknownRowTypeException();
     }
 
 }

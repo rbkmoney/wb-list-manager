@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import static org.junit.Assert.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
@@ -44,6 +45,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     private static final String SHOP_ID = "shopId";
     private static final String PARTY_ID = "partyId";
     private static final String LIST_NAME = "listName";
+    public static final String IDENTITY_ID = "identityId";
 
     @LocalServerPort
     int serverPort;
@@ -66,25 +68,15 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                 .withNetworkTimeout(300000);
         WbListServiceSrv.Iface iface = clientBuilder.build(WbListServiceSrv.Iface.class);
 
-        Producer<String, ChangeCommand> producer = createProducer();
-        ChangeCommand changeCommand = createCommand(createRow());
-        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producer.send(producerRecord).get();
-        producer.close();
-        Thread.sleep(1000L);
+        ChangeCommand changeCommand = produceCreateRow(createRow());
 
         boolean exist = iface.isExist(changeCommand.getRow());
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
-        producer = createProducer();
-        changeCommand.setCommand(Command.DELETE);
-        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producer.send(producerRecord).get();
-        producer.close();
-        Thread.sleep(1000L);
+        produceDeleteRow(changeCommand);
 
         exist = iface.isExist(changeCommand.getRow());
-        Assert.assertFalse(exist);
+        assertFalse(exist);
 
         Consumer<String, Event> consumer = createConsumer();
         consumer.subscribe(Collections.singletonList(topicEventSink));
@@ -97,48 +89,85 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
             eventList.add(record.value());});
         consumer.close();
 
-        Assert.assertEquals(2, eventList.size());
+        assertEquals(2, eventList.size());
 
-        producer = createProducer();
+        Producer<String, ChangeCommand> producer = createProducer();
         Row row = createRow();
         changeCommand = createCommand(row);
-        row.setShopId(null);
-        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        row.getId().getPaymentId()
+                .setShopId(null);
+
+        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
 
         exist = iface.isExist(row);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
-        row.setShopId(SHOP_ID);
+        row.getId().getPaymentId()
+                .setShopId(SHOP_ID);
+
         exist = iface.isExist(row);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         Result info = iface.getRowInfo(row);
-        Assert.assertFalse(info.isSetRowInfo());
+        assertFalse(info.isSetRowInfo());
 
         row.setListType(ListType.grey);
 
         //check without partyId and shop id
         createRow(Instant.now().toString(), null, null);
         RowInfo rowInfo = iface.getRowInfo(row).getRowInfo();
-        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+        assertEquals(5, rowInfo.getCountInfo().getCount());
 
         //check without partyId
         createRow(Instant.now().toString(), null, SHOP_ID);
         rowInfo = iface.getRowInfo(row).getRowInfo();
-        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+        assertEquals(5, rowInfo.getCountInfo().getCount());
 
         //check full key field
         createRow(Instant.now().toString(), PARTY_ID, SHOP_ID);
         rowInfo = iface.getRowInfo(row).getRowInfo();
-        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+        assertEquals(5, rowInfo.getCountInfo().getCount());
 
         rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString(), PARTY_ID, SHOP_ID);
 
-        Assert.assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
+        assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
+
+        Row rowP2p = createListRow();
+        rowP2p.setId(IdInfo.p2p_id(new P2pId().setIdentityId(IDENTITY_ID)));
+
+        changeCommand = produceCreateRow(rowP2p);
+
+        exist = iface.isExist(changeCommand.getRow());
+        assertTrue(exist);
+
+        produceDeleteRow(changeCommand);
+
+        exist = iface.isExist(changeCommand.getRow());
+        assertFalse(exist);
     }
+
+    private void produceDeleteRow(ChangeCommand changeCommand) throws InterruptedException, java.util.concurrent.ExecutionException {
+        Producer<String, ChangeCommand> producer = createProducer();
+        changeCommand.setCommand(Command.DELETE);
+        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producer.send(producerRecord).get();
+        producer.close();
+        Thread.sleep(1000L);
+    }
+
+    private ChangeCommand produceCreateRow(com.rbkmoney.damsel.wb_list.Row row) throws InterruptedException, java.util.concurrent.ExecutionException {
+        Producer<String, ChangeCommand> producer = createProducer();
+        ChangeCommand changeCommand = createCommand(row);
+        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        producer.send(producerRecord).get();
+        producer.close();
+        Thread.sleep(1000L);
+        return changeCommand;
+    }
+
 
     private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount, String partyId, String shopId) throws InterruptedException, java.util.concurrent.ExecutionException, TException {
         Row rowWithCountInfo = createRow(startTimeCount, partyId, shopId);
@@ -170,9 +199,17 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
-        com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-        row.setShopId(SHOP_ID);
-        row.setPartyId(PARTY_ID);
+        Row row = createListRow();
+        row.setId(IdInfo.payment_id(new PaymentId()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID)
+        ));
+        return row;
+    }
+
+    @NotNull
+    private Row createListRow() {
+        Row row = new Row();
         row.setListName(LIST_NAME);
         row.setListType(ListType.black);
         row.setValue(VALUE);
@@ -182,8 +219,10 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId, String shopId) {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
-        row.setShopId(shopId);
-        row.setPartyId(partyId);
+        row.setId(IdInfo.payment_id(new PaymentId()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID)
+        ));
         row.setListName(LIST_NAME);
         row.setListType(ListType.grey);
         row.setValue(VALUE);
