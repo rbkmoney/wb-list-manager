@@ -87,19 +87,18 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
         if (row.getId().isSetPaymentId()) {
             PaymentId paymentId = row.getId().getPaymentId();
             return Optional.ofNullable(
-                    listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value))
-                            .orElse(listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value, paymentId.party_id))
-                                    .orElse(listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value, paymentId.party_id, paymentId.shop_id))
+                    listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue()))
+                            .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId()))
+                                    .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(), paymentId.getShopId()))
                                             .orElse(null))));
         } else if (row.getId().isSetP2pId()) {
             P2pId p2pId = row.getId().getP2pId();
             return Optional.ofNullable(
-                    listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value, RowType.P_2_P))
-                            .orElse(listRepository.get(KeyGenerator.generateKey(row.list_type, row.list_name, row.value, RowType.P_2_P, p2pId.identity_id))
+                    listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P))
+                            .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P, p2pId.getIdentityId()))
                                     .orElse(null)));
-        } else {
-            throw new UnknownRowTypeException();
         }
+        throw new UnknownRowTypeException();
     }
 
 }

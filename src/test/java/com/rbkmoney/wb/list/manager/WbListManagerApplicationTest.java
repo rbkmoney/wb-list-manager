@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import static org.junit.Assert.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
@@ -70,12 +71,12 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         ChangeCommand changeCommand = produceCreateRow(createRow());
 
         boolean exist = iface.isExist(changeCommand.getRow());
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         produceDeleteRow(changeCommand);
 
         exist = iface.isExist(changeCommand.getRow());
-        Assert.assertFalse(exist);
+        assertFalse(exist);
 
         Consumer<String, Event> consumer = createConsumer();
         consumer.subscribe(Collections.singletonList(topicEventSink));
@@ -88,7 +89,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
             eventList.add(record.value());});
         consumer.close();
 
-        Assert.assertEquals(2, eventList.size());
+        assertEquals(2, eventList.size());
 
         Producer<String, ChangeCommand> producer = createProducer();
         Row row = createRow();
@@ -102,37 +103,37 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         Thread.sleep(1000L);
 
         exist = iface.isExist(row);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         row.getId().getPaymentId()
                 .setShopId(SHOP_ID);
 
         exist = iface.isExist(row);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         Result info = iface.getRowInfo(row);
-        Assert.assertFalse(info.isSetRowInfo());
+        assertFalse(info.isSetRowInfo());
 
         row.setListType(ListType.grey);
 
         //check without partyId and shop id
         createRow(Instant.now().toString(), null, null);
         RowInfo rowInfo = iface.getRowInfo(row).getRowInfo();
-        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+        assertEquals(5, rowInfo.getCountInfo().getCount());
 
         //check without partyId
         createRow(Instant.now().toString(), null, SHOP_ID);
         rowInfo = iface.getRowInfo(row).getRowInfo();
-        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+        assertEquals(5, rowInfo.getCountInfo().getCount());
 
         //check full key field
         createRow(Instant.now().toString(), PARTY_ID, SHOP_ID);
         rowInfo = iface.getRowInfo(row).getRowInfo();
-        Assert.assertEquals(5, rowInfo.getCountInfo().getCount());
+        assertEquals(5, rowInfo.getCountInfo().getCount());
 
         rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString(), PARTY_ID, SHOP_ID);
 
-        Assert.assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
+        assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
 
         Row rowP2p = createListRow();
         rowP2p.setId(IdInfo.p2p_id(new P2pId().setIdentityId(IDENTITY_ID)));
@@ -140,12 +141,12 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         changeCommand = produceCreateRow(rowP2p);
 
         exist = iface.isExist(changeCommand.getRow());
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         produceDeleteRow(changeCommand);
 
         exist = iface.isExist(changeCommand.getRow());
-        Assert.assertFalse(exist);
+        assertFalse(exist);
     }
 
     private void produceDeleteRow(ChangeCommand changeCommand) throws InterruptedException, java.util.concurrent.ExecutionException {
