@@ -14,7 +14,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,10 +91,9 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         assertEquals(2, eventList.size());
 
         Producer<String, ChangeCommand> producer = createProducer();
-        Row row = createRow();
+        Row row = createRowOld();
         changeCommand = createCommand(row);
-        row.getId().getPaymentId()
-                .setShopId(null);
+        row.setShopId(null);
 
         ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
@@ -105,8 +103,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         exist = iface.isExist(row);
         assertTrue(exist);
 
-        row.getId().getPaymentId()
-                .setShopId(SHOP_ID);
+        row.setShopId(SHOP_ID);
 
         exist = iface.isExist(row);
         assertTrue(exist);
@@ -204,6 +201,14 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                 .setShopId(SHOP_ID)
                 .setPartyId(PARTY_ID)
         ));
+        return row;
+    }
+
+    @NotNull
+    private com.rbkmoney.damsel.wb_list.Row createRowOld() {
+        Row row = createListRow()
+                .setShopId(SHOP_ID)
+                .setPartyId(PARTY_ID);
         return row;
     }
 

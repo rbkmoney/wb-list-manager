@@ -84,21 +84,22 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     }
 
     private Optional<com.rbkmoney.wb.list.manager.model.Row> getCascadeRow(Row row) {
-        if (row.getId().isSetPaymentId()) {
+        if (row.isSetId() && row.getId().isSetPaymentId()) {
             PaymentId paymentId = row.getId().getPaymentId();
-            return Optional.ofNullable(
-                    listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue()))
-                            .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId()))
-                                    .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(), paymentId.getShopId()))
-                                            .orElse(null))));
-        } else if (row.getId().isSetP2pId()) {
+            return cascadeGetRow(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(), paymentId.getShopId());
+        } else if (row.isSetId() && row.getId().isSetP2pId()) {
             P2pId p2pId = row.getId().getP2pId();
-            return Optional.ofNullable(
-                    listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P))
-                            .orElse(listRepository.get(KeyGenerator.generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P, p2pId.getIdentityId()))
-                                    .orElse(null)));
+            return cascadeGetRow(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P, p2pId.getIdentityId());
         }
-        throw new UnknownRowTypeException();
+        return cascadeGetRow(row.list_type, row.list_name, row.value, row.getPartyId(), row.getShopId());
+    }
+
+    private Optional<com.rbkmoney.wb.list.manager.model.Row> cascadeGetRow(ListType list_type, String list_name, String value, String partyId, String shopId) {
+        return Optional.ofNullable(
+                listRepository.get(KeyGenerator.generateKey(list_type, list_name, value))
+                        .orElse(listRepository.get(KeyGenerator.generateKey(list_type, list_name, value, partyId))
+                                .orElse(listRepository.get(KeyGenerator.generateKey(list_type, list_name, value, partyId, shopId))
+                                        .orElse(null))));
     }
 
 }
