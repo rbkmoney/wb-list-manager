@@ -18,7 +18,7 @@ import java.time.Duration;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(initializers = AbstractRiakIntegrationTest.Initializer.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractRiakIntegrationTest {
 
     @ClassRule
