@@ -40,7 +40,8 @@ public abstract class KafkaAbstractTest extends AbstractRiakIntegrationTest {
 
     @ClassRule
     public static KafkaContainer kafka = new KafkaContainer(KAFKA_DOCKER_VERSION)
-            .withEmbeddedZookeeper();
+            .withEmbeddedZookeeper()
+            .withStartupTimeout(Duration.ofMinutes(2));
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
