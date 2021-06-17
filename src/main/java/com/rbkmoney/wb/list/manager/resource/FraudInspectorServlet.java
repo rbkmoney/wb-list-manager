@@ -6,15 +6,15 @@ import lombok.RequiredArgsConstructor;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebServlet;
+
 import java.io.IOException;
 
 @WebServlet("/wb_list/v1")
 @RequiredArgsConstructor
 public class FraudInspectorServlet extends GenericServlet {
 
-    private Servlet thriftServlet;
-
     private final WbListServiceSrv.Iface fraudInspectorHandler;
+    private Servlet thriftServlet;
 
     @Override
     public void init(ServletConfig config) throws ServletException {

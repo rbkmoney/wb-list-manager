@@ -80,8 +80,9 @@ public class ListRepository implements CrudRepository<Row, String> {
                     .build();
             FetchValue.Response response = client.execute(fetch);
             RiakObject obj = response.getValue(RiakObject.class);
-            return obj != null && obj.getValue() != null ?
-                    Optional.of(new Row(key, obj.getValue().toString())) : Optional.empty();
+            return obj != null && obj.getValue() != null
+                    ? Optional.of(new Row(key, obj.getValue().toString()))
+                    : Optional.empty();
         } catch (InterruptedException e) {
             log.error("InterruptedException in ListRepository when get e: ", e);
             Thread.currentThread().interrupt();

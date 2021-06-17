@@ -3,7 +3,6 @@ package com.rbkmoney.wb.list.manager.config;
 import com.basho.riak.client.api.RiakClient;
 import com.basho.riak.client.core.RiakCluster;
 import com.basho.riak.client.core.RiakNode;
-import com.basho.riak.client.core.netty.PingHealthCheck;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

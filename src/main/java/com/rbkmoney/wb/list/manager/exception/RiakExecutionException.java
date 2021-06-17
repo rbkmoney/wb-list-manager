@@ -17,7 +17,8 @@ public class RiakExecutionException extends RuntimeException {
         super(cause);
     }
 
-    public RiakExecutionException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public RiakExecutionException(String message, Throwable cause, boolean enableSuppression,
+                                  boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

@@ -46,17 +46,17 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
     private static final String PARTY_ID = "partyId";
     private static final String LIST_NAME = "listName";
 
-    @MockBean
-    private ListRepository listRepository;
-
     @Value("${kafka.wblist.topic.command}")
     public String topic;
-    
-    @Value("${riak.bucket}")
-    private String BUCKET_NAME;
 
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
+
+    @MockBean
+    private ListRepository listRepository;
+
+    @Value("${riak.bucket}")
+    private String bucketName;
 
     public static <T> Producer<String, T> createProducer() {
         Properties props = new Properties();
@@ -65,6 +65,16 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ThriftSerializer.class);
         return new KafkaProducer<>(props);
+    }
+
+    public static <T> Consumer<String, T> createConsumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        return new KafkaConsumer<>(props);
     }
 
     @Test
@@ -77,7 +87,8 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         Producer<String, ChangeCommand> producerNew = createProducer();
         ChangeCommand changeCommand = createCommand();
         changeCommand.setCommand(Command.CREATE);
-        ProducerRecord<String, ChangeCommand> producerRecordCommand = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        ProducerRecord<String, ChangeCommand> producerRecordCommand =
+                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producerNew.send(producerRecordCommand).get();
         producerNew.close();
 
@@ -106,16 +117,6 @@ public class WbListSafetyApplicationTest extends KafkaAbstractTest {
         row.setListType(ListType.black);
         row.setValue(VALUE);
         return row;
-    }
-
-    public static <T> Consumer<String, T> createConsumer() {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        return new KafkaConsumer<>(props);
     }
 
 }

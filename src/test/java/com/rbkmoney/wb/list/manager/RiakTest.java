@@ -28,7 +28,7 @@ public class RiakTest extends KafkaAbstractTest {
     private static final String KEY = "key";
 
     @Value("${riak.bucket}")
-    private String BUCKET_NAME;
+    private String bucketName;
 
     @Autowired
     private ListRepository listRepository;
@@ -45,7 +45,7 @@ public class RiakTest extends KafkaAbstractTest {
         row.setValue(VALUE);
         listRepository.create(row);
 
-        Namespace ns = new Namespace(BUCKET_NAME);
+        Namespace ns = new Namespace(bucketName);
         Location location = new Location(ns, KEY);
         FetchValue fv = new FetchValue.Builder(location).build();
         FetchValue.Response response = client.execute(fv);
