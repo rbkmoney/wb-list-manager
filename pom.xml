@@ -20,8 +20,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>11</java.version>
         <server.port>8022</server.port>
-        <exposed.ports>${server.port}</exposed.ports>
-        <dockerfile.base.service.tag>bc95d0d6dc13c693acd2b274531a7d604b877bf3</dockerfile.base.service.tag>
+        <management.port>8023</management.port>
+        <exposed.ports>${server.port} ${management.port}</exposed.ports>
+        <dockerfile.base.service.tag>c0612d6052ac049496b72a23a04acb142035f249</dockerfile.base.service.tag>
         <dockerfile.registry>dr2.rbkmoney.com</dockerfile.registry>
         <shared.resources.version>0.3.7</shared.resources.version>
         <wb.list.proto.version>1.33-554d59c</wb.list.proto.version>
@@ -65,6 +66,7 @@
         <dependency>
             <groupId>com.rbkmoney</groupId>
             <artifactId>spring-boot-starter-metrics-statsd</artifactId>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.rbkmoney</groupId>
@@ -159,7 +161,7 @@
                 </dependencies>
                 <configuration>
                     <resourceBundles>
-                        <resourceBundle>com.rbkmoney:shared-resources:${shared.resources.version}</resourceBundle>
+                        <resourceBundle>com.rbkmoney:shared-resources:${shared-resources.version}</resourceBundle>
                     </resourceBundles>
                     <attachToMain>false</attachToMain>
                     <attachToTest>false</attachToTest>

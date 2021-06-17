@@ -5,6 +5,7 @@ build('wb-list-manager', 'java-maven') {
 
     def javaServicePipeline
     runStage('load JavaService pipeline') {
+        env.skipSonar = 'true'
         javaServicePipeline = load("build_utils/jenkins_lib/pipeJavaService.groovy")
     }
 
