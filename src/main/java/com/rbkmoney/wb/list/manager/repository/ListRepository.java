@@ -76,7 +76,7 @@ public class ListRepository implements CrudRepository<Row, String> {
             log.info("ListRepository get bucket: {} key: {}", bucket, key);
             Location quoteObjectLocation = createLocation(bucket, key);
             FetchValue fetch = new FetchValue.Builder(quoteObjectLocation)
-                    .withOption(FetchValue.Option.R, new Quorum(3))
+                    .withOption(FetchValue.Option.R, Quorum.quorumQuorum())
                     .build();
             FetchValue.Response response = client.execute(fetch);
             RiakObject obj = response.getValue(RiakObject.class);
