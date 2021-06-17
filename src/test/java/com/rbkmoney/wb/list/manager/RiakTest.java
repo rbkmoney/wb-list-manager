@@ -18,6 +18,8 @@ import org.springframework.test.context.ContextConfiguration;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import static java.lang.Thread.sleep;
+
 @SpringBootTest
 @ContextConfiguration(classes = {ListRepository.class, RiakConfig.class})
 public class RiakTest extends KafkaAbstractTest {
@@ -36,6 +38,8 @@ public class RiakTest extends KafkaAbstractTest {
 
     @Test
     public void riakTest() throws ExecutionException, InterruptedException {
+        sleep(10000);
+
         Row row = new Row();
         row.setKey(KEY);
         row.setValue(VALUE);
