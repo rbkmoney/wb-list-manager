@@ -96,8 +96,10 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
         return cascadeGetRow(row.list_type, row.list_name, row.value, row.getPartyId(), row.getShopId());
     }
 
-    private Optional<com.rbkmoney.wb.list.manager.model.Row> cascadeGetRow(ListType listType, String listName,
-                                                                           String value, String partyId,
+    private Optional<com.rbkmoney.wb.list.manager.model.Row> cascadeGetRow(ListType listType,
+                                                                           String listName,
+                                                                           String value,
+                                                                           String partyId,
                                                                            String shopId) {
         return Optional.ofNullable(
                 listRepository.get(KeyGenerator.generateKey(listType, listName, value))

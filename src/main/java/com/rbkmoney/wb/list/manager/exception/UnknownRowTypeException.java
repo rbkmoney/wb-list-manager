@@ -17,7 +17,9 @@ public class UnknownRowTypeException extends RuntimeException {
         super(cause);
     }
 
-    public UnknownRowTypeException(String message, Throwable cause, boolean enableSuppression,
+    public UnknownRowTypeException(String message,
+                                   Throwable cause,
+                                   boolean enableSuppression,
                                    boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }

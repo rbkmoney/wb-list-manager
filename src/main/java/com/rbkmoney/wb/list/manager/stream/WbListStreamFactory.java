@@ -25,8 +25,10 @@ public class WbListStreamFactory {
     private final EventSerde eventSerde = new EventSerde();
     private final CommandService commandService;
     private final RetryTemplate retryTemplate;
+
     @Value("${kafka.wblist.topic.command}")
     private String readTopic;
+
     @Value("${kafka.wblist.topic.event.sink}")
     private String resultTopic;
 
