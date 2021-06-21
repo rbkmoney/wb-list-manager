@@ -16,10 +16,12 @@ public class KeyGenerator {
     public static String generateKey(com.rbkmoney.damsel.wb_list.Row row) {
         if (row.isSetId() && row.getId().isSetPaymentId()) {
             PaymentId paymentId = row.getId().getPaymentId();
-            return generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(), paymentId.getShopId());
+            return generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(),
+                    paymentId.getShopId());
         } else if (row.isSetId() && row.getId().isSetP2pId()) {
             P2pId p2pId = row.getId().getP2pId();
-            return generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P, p2pId.getIdentityId());
+            return generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P,
+                    p2pId.getIdentityId());
         }
         return generateKey(row.getListType(), row.getListName(), row.getValue(), row.getPartyId(), row.getShopId());
     }

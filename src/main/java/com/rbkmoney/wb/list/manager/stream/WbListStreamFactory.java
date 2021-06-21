@@ -21,15 +21,16 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class WbListStreamFactory {
 
-    @Value("${kafka.wblist.topic.command}")
-    private String readTopic;
-    @Value("${kafka.wblist.topic.event.sink}")
-    private String resultTopic;
-
     private final CommandSerde commandSerde = new CommandSerde();
     private final EventSerde eventSerde = new EventSerde();
     private final CommandService commandService;
     private final RetryTemplate retryTemplate;
+
+    @Value("${kafka.wblist.topic.command}")
+    private String readTopic;
+
+    @Value("${kafka.wblist.topic.event.sink}")
+    private String resultTopic;
 
     public KafkaStreams create(final Properties streamsConfiguration) {
         try {

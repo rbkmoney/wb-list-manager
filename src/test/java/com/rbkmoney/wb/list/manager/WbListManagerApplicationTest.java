@@ -39,26 +39,36 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ContextConfiguration(classes = WbListManagerApplication.class)
 public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
+    public static final String IDENTITY_ID = "identityId";
     private static final String VALUE = "value";
     private static final String KEY = "key";
     private static final String SHOP_ID = "shopId";
     private static final String PARTY_ID = "partyId";
     private static final String LIST_NAME = "listName";
-    public static final String IDENTITY_ID = "identityId";
-
-    @LocalServerPort
-    int serverPort;
-
     private static String SERVICE_URL = "http://localhost:%s/wb_list/v1";
 
     @Value("${kafka.wblist.topic.command}")
     public String topic;
-    
-    @Value("${riak.bucket}")
-    private String BUCKET_NAME;
 
     @Value("${kafka.wblist.topic.event.sink}")
     public String topicEventSink;
+
+    @LocalServerPort
+    int serverPort;
+
+    @Value("${riak.bucket}")
+    private String bucketName;
+
+    public static Consumer<String, Event> createConsumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "CLIENT");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        return new KafkaConsumer<>(props);
+    }
 
     @Test
     public void kafkaRowTest() throws Exception {
@@ -85,7 +95,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                 consumer.poll(Duration.ofSeconds(1));
         consumerRecords.forEach(record -> {
             log.info("poll message: {}", record.value());
-            eventList.add(record.value());});
+            eventList.add(record.value());
+        });
         consumer.close();
 
         assertEquals(2, eventList.size());
@@ -95,7 +106,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         changeCommand = createCommand(row);
         row.setShopId(null);
 
-        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        ProducerRecord<String, ChangeCommand> producerRecord =
+                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
@@ -146,32 +158,38 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         assertFalse(exist);
     }
 
-    private void produceDeleteRow(ChangeCommand changeCommand) throws InterruptedException, java.util.concurrent.ExecutionException {
+    private void produceDeleteRow(ChangeCommand changeCommand)
+            throws InterruptedException, java.util.concurrent.ExecutionException {
         Producer<String, ChangeCommand> producer = createProducer();
         changeCommand.setCommand(Command.DELETE);
-        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        ProducerRecord<String, ChangeCommand> producerRecord =
+                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
     }
 
-    private ChangeCommand produceCreateRow(com.rbkmoney.damsel.wb_list.Row row) throws InterruptedException, java.util.concurrent.ExecutionException {
+    private ChangeCommand produceCreateRow(com.rbkmoney.damsel.wb_list.Row row)
+            throws InterruptedException, java.util.concurrent.ExecutionException {
         Producer<String, ChangeCommand> producer = createProducer();
         ChangeCommand changeCommand = createCommand(row);
-        ProducerRecord<String, ChangeCommand> producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
+        ProducerRecord<String, ChangeCommand> producerRecord =
+                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
         producer.close();
         Thread.sleep(1000L);
         return changeCommand;
     }
 
-
-    private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount, String partyId, String shopId) throws InterruptedException, java.util.concurrent.ExecutionException, TException {
+    private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount, String partyId,
+                                             String shopId)
+            throws InterruptedException, java.util.concurrent.ExecutionException, TException {
         Row rowWithCountInfo = createRow(startTimeCount, partyId, shopId);
         return iface.getRowInfo(rowWithCountInfo).getRowInfo();
     }
 
-    private Row createRow(String startTimeCount, String partyId, String shopId) throws InterruptedException, java.util.concurrent.ExecutionException {
+    private Row createRow(String startTimeCount, String partyId, String shopId)
+            throws InterruptedException, java.util.concurrent.ExecutionException {
         Producer<String, ChangeCommand> producer;
         ChangeCommand changeCommand;
         ProducerRecord<String, ChangeCommand> producerRecord;
@@ -187,14 +205,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     }
 
     @NotNull
-    private ChangeCommandWrapper createCommand(com.rbkmoney.damsel.wb_list.Row row) {
-        ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
-        changeCommand.setCommand(Command.CREATE);
-        changeCommand.setRow(row);
-        return changeCommand;
-    }
-
-    @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
         Row row = createListRow();
         row.setId(IdInfo.payment_id(new PaymentId()
@@ -203,6 +213,15 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         ));
         return row;
     }
+
+    @NotNull
+    private ChangeCommandWrapper createCommand(com.rbkmoney.damsel.wb_list.Row row) {
+        ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
+        changeCommand.setCommand(Command.CREATE);
+        changeCommand.setRow(row);
+        return changeCommand;
+    }
+
 
     @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRowOld() {
@@ -222,7 +241,8 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     }
 
     @NotNull
-    private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId, String shopId) {
+    private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId,
+                                                                   String shopId) {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
         row.setId(IdInfo.payment_id(new PaymentId()
                 .setShopId(SHOP_ID)
@@ -238,17 +258,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                         .setTimeToLive(Instant.now().plusSeconds(6000L).toString()))
         );
         return row;
-    }
-
-    public static Consumer<String, Event> createConsumer() {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "CLIENT");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-        return new KafkaConsumer<>(props);
     }
 
 }
