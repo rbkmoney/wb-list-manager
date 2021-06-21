@@ -3,7 +3,7 @@ build('wb-list-manager', 'java-maven') {
     checkoutRepo()
     loadBuildUtils()
 
-    def javaServicePipeline
+    def pipeJavaServiceInsideDocker
     runStage('load JavaService pipeline') {
         javaServicePipeline = load("build_utils/jenkins_lib/pipeJavaServiceInsideDocker.groovy")
     }
@@ -12,5 +12,5 @@ build('wb-list-manager', 'java-maven') {
     def mvnArgs = '-DjvmArgs="-Xmx256m"'
     def useJava11 = true
 
-    javaServicePipeline(serviceName, useJava11, mvnArgs)
+    pipeJavaServiceInsideDocker(serviceName, mvnArgs)
 }
