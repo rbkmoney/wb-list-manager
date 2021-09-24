@@ -123,17 +123,17 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         row.setListType(ListType.grey);
 
         //check without partyId and shop id
-        createRow(Instant.now().toString(), null, null);
+        createRow(Instant.now().toString());
         RowInfo rowInfo = iface.getRowInfo(row).getRowInfo();
         assertEquals(5, rowInfo.getCountInfo().getCount());
 
         //check without partyId
-        createRow(Instant.now().toString(), null, SHOP_ID);
+        createRow(Instant.now().toString());
         rowInfo = iface.getRowInfo(row).getRowInfo();
         assertEquals(5, rowInfo.getCountInfo().getCount());
 
         //check full key field
-        createRow(Instant.now().toString(), PARTY_ID, SHOP_ID);
+        createRow(Instant.now().toString());
         rowInfo = iface.getRowInfo(row).getRowInfo();
         assertEquals(5, rowInfo.getCountInfo().getCount());
 
@@ -181,17 +181,17 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount, String partyId,
                                              String shopId)
             throws InterruptedException, java.util.concurrent.ExecutionException, TException {
-        Row rowWithCountInfo = createRow(startTimeCount, partyId, shopId);
+        Row rowWithCountInfo = createRow(startTimeCount);
         return iface.getRowInfo(rowWithCountInfo).getRowInfo();
     }
 
-    private Row createRow(String startTimeCount, String partyId, String shopId)
+    private Row createRow(String startTimeCount)
             throws InterruptedException, java.util.concurrent.ExecutionException {
         Producer<String, ChangeCommand> producer;
         ChangeCommand changeCommand;
         ProducerRecord<String, ChangeCommand> producerRecord;
         producer = createProducer();
-        Row rowWithCountInfo = createRowWithCountInfo(startTimeCount, partyId, shopId);
+        Row rowWithCountInfo = createRowWithCountInfo(startTimeCount);
         changeCommand = createCommand(rowWithCountInfo);
         producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
         producer.send(producerRecord).get();
@@ -232,8 +232,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         return row;
     }
 
-    private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId,
-                                                                   String shopId) {
+    private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount) {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
         row.setId(IdInfo.payment_id(new PaymentId()
                 .setShopId(SHOP_ID)

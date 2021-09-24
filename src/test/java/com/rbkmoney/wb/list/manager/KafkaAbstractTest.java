@@ -19,6 +19,8 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -49,6 +51,11 @@ public abstract class KafkaAbstractTest {
             .withEmbeddedZookeeper()
             .withStartupTimeout(Duration.ofMinutes(2));
 
+    @DynamicPropertySource
+    static void connectionConfigs(DynamicPropertyRegistry registry) {
+        registry.add("riak.port", () -> RiakContainerExtension.RIAK.getMappedPort(8087));
+    }
+
     public static <T> Consumer<String, T> createConsumer() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
@@ -72,8 +79,7 @@ public abstract class KafkaAbstractTest {
         @Override
         public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
             TestPropertyValues
-                    .of("kafka.bootstrap.servers=" + kafka.getBootstrapServers(),
-                            "riak.port=" + RiakContainerExtension.RIAK.getMappedPort(8087))
+                    .of("kafka.bootstrap.servers=" + kafka.getBootstrapServers())
                     .applyTo(configurableApplicationContext.getEnvironment());
             initTopic("wb-list-command");
             initTopic("wb-list-event-sink");
