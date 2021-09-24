@@ -63,7 +63,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     }
 
     @Override
-    public Result getRowInfo(Row row) throws ListNotFound, TException {
+    public Result getRowInfo(Row row) {
         log.info("WbListServiceHandler getRowInfo row: {}", row);
         Optional<com.rbkmoney.wb.list.manager.model.Row> result = getCascadeRow(row);
         if (result.isPresent() && row.getListType() == ListType.grey) {

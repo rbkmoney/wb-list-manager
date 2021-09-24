@@ -11,16 +11,16 @@ import java.io.IOException;
 
 @WebServlet("/wb_list/v1")
 @RequiredArgsConstructor
-public class FraudInspectorServlet extends GenericServlet {
+public class WbListServlet extends GenericServlet {
 
-    private final WbListServiceSrv.Iface fraudInspectorHandler;
+    private final WbListServiceSrv.Iface wbListHandler;
     private Servlet thriftServlet;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         thriftServlet = new THServiceBuilder()
-                .build(WbListServiceSrv.Iface.class, fraudInspectorHandler);
+                .build(WbListServiceSrv.Iface.class, wbListHandler);
     }
 
     @Override

@@ -13,14 +13,12 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.thrift.TException;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.net.URI;
 import java.time.Duration;
@@ -30,13 +28,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ContextConfiguration(classes = WbListManagerApplication.class)
 public class WbListManagerApplicationTest extends KafkaAbstractTest {
 
     public static final String IDENTITY_ID = "identityId";
@@ -71,7 +68,7 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     }
 
     @Test
-    public void kafkaRowTest() throws Exception {
+    void kafkaRowTest() throws Exception {
         THClientBuilder clientBuilder = new THClientBuilder()
                 .withAddress(new URI(String.format(SERVICE_URL, serverPort)))
                 .withNetworkTimeout(300000);
@@ -204,7 +201,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         return rowWithCountInfo;
     }
 
-    @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
         Row row = createListRow();
         row.setId(IdInfo.payment_id(new PaymentId()
@@ -214,7 +210,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         return row;
     }
 
-    @NotNull
     private ChangeCommandWrapper createCommand(com.rbkmoney.damsel.wb_list.Row row) {
         ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
         changeCommand.setCommand(Command.CREATE);
@@ -222,8 +217,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         return changeCommand;
     }
 
-
-    @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRowOld() {
         Row row = createListRow()
                 .setShopId(SHOP_ID)
@@ -231,7 +224,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         return row;
     }
 
-    @NotNull
     private Row createListRow() {
         Row row = new Row();
         row.setListName(LIST_NAME);
@@ -240,7 +232,6 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
         return row;
     }
 
-    @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId,
                                                                    String shopId) {
         com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();

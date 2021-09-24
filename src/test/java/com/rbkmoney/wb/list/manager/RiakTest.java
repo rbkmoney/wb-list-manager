@@ -8,8 +8,7 @@ import com.basho.riak.client.core.query.RiakObject;
 import com.rbkmoney.wb.list.manager.config.RiakConfig;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.Thread.sleep;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {ListRepository.class, RiakConfig.class})
@@ -37,7 +37,7 @@ public class RiakTest extends KafkaAbstractTest {
     private RiakClient client;
 
     @Test
-    public void riakTest() throws ExecutionException, InterruptedException {
+    void riakTest() throws ExecutionException, InterruptedException {
         sleep(10000);
 
         Row row = new Row();
@@ -52,17 +52,16 @@ public class RiakTest extends KafkaAbstractTest {
         RiakObject obj = response.getValue(RiakObject.class);
 
         String result = obj.getValue().toString();
-        Assert.assertEquals(VALUE, result);
+        assertEquals(VALUE, result);
 
         Optional<Row> resultGet = listRepository.get(KEY);
-        Assert.assertFalse(resultGet.isEmpty());
-        Assert.assertEquals(VALUE, resultGet.get().getValue());
+        assertFalse(resultGet.isEmpty());
+        assertEquals(VALUE, resultGet.get().getValue());
 
         listRepository.remove(row);
         response = client.execute(fv);
         obj = response.getValue(RiakObject.class);
-        Assert.assertNull(obj);
-
+        assertNull(obj);
     }
 
 }

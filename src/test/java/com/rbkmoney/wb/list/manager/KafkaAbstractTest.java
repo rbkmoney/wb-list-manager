@@ -1,6 +1,7 @@
 package com.rbkmoney.wb.list.manager;
 
 import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
+import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
 import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -11,17 +12,18 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.jetbrains.annotations.NotNull;
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -29,17 +31,21 @@ import java.util.Properties;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+@Testcontainers
 @Slf4j
-@RunWith(SpringRunner.class)
+@ExtendWith({SpringExtension.class, RiakContainerExtension.class})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ContextConfiguration(initializers = KafkaAbstractTest.Initializer.class)
-public abstract class KafkaAbstractTest extends AbstractRiakIntegrationTest {
+public abstract class KafkaAbstractTest {
 
-    public static final String KAFKA_DOCKER_VERSION = "5.0.1";
+    private static final String CONFLUENT_IMAGE_NAME = "confluentinc/cp-kafka";
+    private static final String CONFLUENT_PLATFORM_VERSION = "6.0.3";
 
-    @ClassRule
-    public static KafkaContainer kafka = new KafkaContainer(KAFKA_DOCKER_VERSION)
+    @Container
+    public static KafkaContainer kafka = new KafkaContainer(DockerImageName
+            .parse(CONFLUENT_IMAGE_NAME)
+            .withTag(CONFLUENT_PLATFORM_VERSION))
             .withEmbeddedZookeeper()
             .withStartupTimeout(Duration.ofMinutes(2));
 
@@ -66,13 +72,13 @@ public abstract class KafkaAbstractTest extends AbstractRiakIntegrationTest {
         @Override
         public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
             TestPropertyValues
-                    .of("kafka.bootstrap.servers=" + kafka.getBootstrapServers())
+                    .of("kafka.bootstrap.servers=" + kafka.getBootstrapServers(),
+                            "riak.port=" + RiakContainerExtension.RIAK.getMappedPort(8087))
                     .applyTo(configurableApplicationContext.getEnvironment());
             initTopic("wb-list-command");
             initTopic("wb-list-event-sink");
         }
 
-        @NotNull
         private <T> Consumer<String, T> initTopic(String topicName) {
             Consumer<String, T> consumer = createConsumer();
             try {

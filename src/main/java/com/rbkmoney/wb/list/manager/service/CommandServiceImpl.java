@@ -20,10 +20,10 @@ public class CommandServiceImpl implements CommandService {
 
     @Override
     public Event apply(ChangeCommand command) {
-        log.info("WbListStreamFactory apply command: {}", command);
+        log.info("CommandService apply command: {}", command);
         Event event = new Event();
         Row row = commandToRowConverter.convert(command);
-        log.info("WbListStreamFactory apply row: {}", row);
+        log.info("CommandService apply row: {}", row);
         switch (command.command) {
             case CREATE:
                 listRepository.create(row);
@@ -34,7 +34,7 @@ public class CommandServiceImpl implements CommandService {
                 event.setEventType(EventType.DELETED);
                 break;
             default:
-                log.warn("WbListStreamFactory command for list not found! command: {}", command);
+                log.warn("CommandService command for list not found! command: {}", command);
                 throw new RuntimeException("WbListStreamFactory command for list not found!");
         }
         event.setRow(command.getRow());

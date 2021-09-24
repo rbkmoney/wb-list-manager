@@ -8,110 +8,110 @@ import com.rbkmoney.damsel.wb_list.Result;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.apache.thrift.TException;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 
+@ExtendWith(MockitoExtension.class)
 public class WbListServiceHandlerTest {
 
     public static final String VALUE = "value";
     public static final String PARTY_ID = "partyId";
     public static final String SHOP_ID = "shopId";
     public static final String LIST_NAME = "listName";
-    WbListServiceHandler wbListServiceHandler;
+    private WbListServiceHandler wbListServiceHandler;
 
     @Mock
-    ListRepository listRepository;
+    private ListRepository listRepository;
 
-    @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    @BeforeEach
+    void setUp() {
         wbListServiceHandler = new WbListServiceHandler(listRepository, new ObjectMapper());
     }
 
     @Test
-    public void isExist() throws TException {
+    void isExist() throws TException {
         com.rbkmoney.damsel.wb_list.Row row = createRow();
         boolean exist = wbListServiceHandler.isExist(row);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         Mockito.when(listRepository.get(anyString())).thenReturn(Optional.empty());
         exist = wbListServiceHandler.isExist(row);
-        Assert.assertFalse(exist);
+        assertFalse(exist);
     }
 
     @Test
-    public void getRowInfo() throws TException {
+    void getRowInfo() {
         com.rbkmoney.damsel.wb_list.Row row = createRow();
         Result result = wbListServiceHandler.getRowInfo(row);
-        Assert.assertFalse(result == null);
+        assertFalse(result == null);
     }
 
     @Test
-    public void isAllExist() throws TException {
+    void isAllExist() throws TException {
         ArrayList<com.rbkmoney.damsel.wb_list.Row> list = new ArrayList<>();
         boolean exist = wbListServiceHandler.isAllExist(list);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         list.add(createRow());
         list.add(createRow());
         Mockito.when(listRepository.get(anyString())).thenReturn(Optional.of(new Row()));
-        Assert.assertTrue(wbListServiceHandler.isAllExist(list));
+        assertTrue(wbListServiceHandler.isAllExist(list));
 
         Mockito.when(listRepository.get(anyString()))
                 .thenReturn(Optional.of(new Row()))
                 .thenReturn(Optional.empty());
-        Assert.assertFalse(wbListServiceHandler.isAllExist(list));
+        assertFalse(wbListServiceHandler.isAllExist(list));
     }
 
     @Test
-    public void isAnyExist() throws TException {
+    void isAnyExist() throws TException {
         ArrayList<com.rbkmoney.damsel.wb_list.Row> list = new ArrayList<>();
         boolean exist = wbListServiceHandler.isAnyExist(list);
-        Assert.assertFalse(exist);
+        assertFalse(exist);
 
         list.add(createRow());
         list.add(createRow());
         Mockito.when(listRepository.get(anyString()))
                 .thenReturn(Optional.of(new Row()))
                 .thenReturn(Optional.empty());
-        Assert.assertTrue(wbListServiceHandler.isAnyExist(list));
+        assertTrue(wbListServiceHandler.isAnyExist(list));
 
         Mockito.when(listRepository.get(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.empty());
-        Assert.assertFalse(wbListServiceHandler.isAnyExist(list));
+        assertFalse(wbListServiceHandler.isAnyExist(list));
     }
 
     @Test
-    public void isNoOneExist() throws TException {
+    void isNoOneExist() throws TException {
         ArrayList<com.rbkmoney.damsel.wb_list.Row> list = new ArrayList<>();
         boolean exist = wbListServiceHandler.isNotOneExist(list);
-        Assert.assertTrue(exist);
+        assertTrue(exist);
 
         list.add(createRow());
         list.add(createRow());
         Mockito.when(listRepository.get(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.empty());
-        Assert.assertTrue(wbListServiceHandler.isNotOneExist(list));
+        assertTrue(wbListServiceHandler.isNotOneExist(list));
 
         Mockito.when(listRepository.get(anyString()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(new Row()));
-        Assert.assertFalse(wbListServiceHandler.isNotOneExist(list));
+        assertFalse(wbListServiceHandler.isNotOneExist(list));
     }
 
-    @NotNull
     private com.rbkmoney.damsel.wb_list.Row createRow() {
         Row value = new Row();
         value.setValue(VALUE);
