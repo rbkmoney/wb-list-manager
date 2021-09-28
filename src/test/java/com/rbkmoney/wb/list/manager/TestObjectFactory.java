@@ -1,11 +1,9 @@
 package com.rbkmoney.wb.list.manager;
 
-import com.rbkmoney.damsel.wb_list.Command;
-import com.rbkmoney.damsel.wb_list.IdInfo;
-import com.rbkmoney.damsel.wb_list.ListType;
-import com.rbkmoney.damsel.wb_list.PaymentId;
+import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public abstract class TestObjectFactory {
@@ -19,6 +17,8 @@ public abstract class TestObjectFactory {
         row.setListType(ListType.black);
         row.setListName(randomString());
         row.setValue(randomString());
+        row.setPartyId(row.getId().getPaymentId().getPartyId());
+        row.setShopId(row.getId().getPaymentId().getShopId());
         return row;
     }
 
@@ -32,5 +32,16 @@ public abstract class TestObjectFactory {
         com.rbkmoney.damsel.wb_list.Row row = testRow();
         changeCommand.setRow(row);
         return changeCommand;
+    }
+
+    public static Row testRowWithCountInfo(String startTimeCount) {
+        Row row = testRow();
+        row.setRowInfo(RowInfo.count_info(
+                new CountInfo()
+                        .setCount(5L)
+                        .setStartCountTime(startTimeCount)
+                        .setTimeToLive(Instant.now().plusSeconds(6000L).toString()))
+        );
+        return row;
     }
 }

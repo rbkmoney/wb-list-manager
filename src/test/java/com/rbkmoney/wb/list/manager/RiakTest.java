@@ -6,13 +6,17 @@ import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
 import com.rbkmoney.wb.list.manager.config.RiakConfig;
+import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -21,8 +25,9 @@ import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ExtendWith({RiakContainerExtension.class})
 @ContextConfiguration(classes = {ListRepository.class, RiakConfig.class})
-public class RiakTest extends KafkaAbstractTest {
+public class RiakTest {
 
     private static final String VALUE = "value";
     private static final String KEY = "key";
@@ -35,6 +40,11 @@ public class RiakTest extends KafkaAbstractTest {
 
     @Autowired
     private RiakClient client;
+
+    @DynamicPropertySource
+    static void connectionConfigs(DynamicPropertyRegistry registry) {
+        registry.add("riak.port", () -> RiakContainerExtension.RIAK.getMappedPort(8087));
+    }
 
     @Test
     void riakTest() throws ExecutionException, InterruptedException {

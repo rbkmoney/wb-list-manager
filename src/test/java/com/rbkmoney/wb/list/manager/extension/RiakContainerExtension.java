@@ -10,6 +10,7 @@ import java.time.Duration;
 public class RiakContainerExtension implements BeforeAllCallback {
 
     public static GenericContainer RIAK;
+
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         RIAK = new GenericContainer("basho/riak-kv")
