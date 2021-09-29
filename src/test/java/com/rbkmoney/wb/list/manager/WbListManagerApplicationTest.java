@@ -16,8 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,11 +59,6 @@ public class WbListManagerApplicationTest {
             testCommandKafkaConsumer;
 
     private WbListServiceSrv.Iface handler;
-
-    @DynamicPropertySource
-    static void connectionConfigs(DynamicPropertyRegistry registry) {
-        registry.add("riak.port", () -> RiakContainerExtension.RIAK.getMappedPort(8087));
-    }
 
     @BeforeEach
     void setUp() throws URISyntaxException {
