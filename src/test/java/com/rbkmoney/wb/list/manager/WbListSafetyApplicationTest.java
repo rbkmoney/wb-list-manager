@@ -6,11 +6,9 @@ import com.rbkmoney.testcontainers.annotations.KafkaSpringBootTest;
 import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducer;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
-import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.apache.thrift.TBase;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -20,7 +18,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @KafkaSpringBootTest
-@ExtendWith({RiakContainerExtension.class})
 @TestPropertySource(properties = {"retry.timeout=100"})
 @KafkaTestcontainer(topicsKeys = {"kafka.wblist.topic.command", "kafka.wblist.topic.event.sink"})
 public class WbListSafetyApplicationTest {
