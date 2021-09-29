@@ -10,7 +10,7 @@ import java.time.Duration;
 
 public class RiakContainerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    public static GenericContainer riak;
+    private GenericContainer riak;
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
