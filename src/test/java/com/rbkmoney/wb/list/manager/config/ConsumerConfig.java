@@ -1,4 +1,4 @@
-package com.rbkmoney.wb.list.manager;
+package com.rbkmoney.wb.list.manager.config;
 
 import com.rbkmoney.damsel.wb_list.Event;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer;

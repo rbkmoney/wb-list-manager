@@ -6,7 +6,6 @@ import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
 import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.testcontainers.shaded.com.trilead.ssh2.ChannelCondition.TIMEOUT;
 
-@Slf4j
 @ExtendWith({RiakContainerExtension.class})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @KafkaSpringBootTest
@@ -104,8 +102,7 @@ public class WbListManagerApplicationTest {
     }
 
     @Test
-        // TODO refactoring
-    void kafkaRowTest() throws Exception {
+    void kafkaRowTest() throws Exception {    // TODO refactoring
         Row row = createRowOld();
         ChangeCommand changeCommand = createCommand(row);
         row.setShopId(null);
