@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +35,11 @@ public class WbListSafetyApplicationTest {
 
     @MockBean
     private ListRepository listRepository;
+
+    @DynamicPropertySource
+    static void connectionConfigs(DynamicPropertyRegistry registry) {
+        registry.add("riak.port", () -> RiakContainerExtension.RIAK.getMappedPort(8087));
+    }
 
     @Test
     void kafkaRowTestException() throws Exception {
