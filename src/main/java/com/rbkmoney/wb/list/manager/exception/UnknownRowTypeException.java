@@ -1,6 +1,6 @@
 package com.rbkmoney.wb.list.manager.exception;
 
-public class UnknownRowTypeException extends RuntimeException {
+public class UnknownRowTypeException extends RuntimeException { // TODO нужно ли оно?
 
     public UnknownRowTypeException() {
     }

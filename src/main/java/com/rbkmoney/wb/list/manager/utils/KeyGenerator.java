@@ -28,7 +28,7 @@ public class KeyGenerator {
 
     public static String generateKey(ListType listType, String listName, String value, String... params) {
         StringBuilder stringBuilder = new StringBuilder();
-        if (params != null) {
+        if (params != null && params.length != 0) {
             for (String param : params) {
                 addIfExist(param, stringBuilder);
             }
@@ -42,11 +42,11 @@ public class KeyGenerator {
                 .toString();
     }
 
-    private static StringBuilder addIfExist(String id, StringBuilder stringBuilder) {
-        if (!StringUtils.isEmpty(id)) {
-            stringBuilder.append(id)
+    private static void addIfExist(String param, StringBuilder stringBuilder) {
+        if (StringUtils.hasLength(param)) {
+            stringBuilder
+                    .append(param)
                     .append(DELIMITER);
         }
-        return stringBuilder;
     }
 }
