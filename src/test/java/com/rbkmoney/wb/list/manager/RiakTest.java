@@ -37,7 +37,7 @@ public class RiakTest {
     private RiakClient client;
 
     @Test
-    public void riakTest() throws ExecutionException, InterruptedException {
+    void riakTest() throws ExecutionException, InterruptedException {
         sleep(20000);
 
         Row row = new Row();
