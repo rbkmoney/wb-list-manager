@@ -40,10 +40,12 @@ public class RiakTestcontainerExtension implements BeforeAllCallback, AfterAllCa
         try (GenericContainer<?> container = new GenericContainer<>(
                 DockerImageName
                         .parse("basho/riak-kv"))
-                .withExposedPorts(8087)
+                .withExposedPorts(8098, 8087)
+                .withPrivilegedMode(true)
                 .withNetworkAliases("riak-kv-" + UUID.randomUUID())
-                .withEnv("CLUSTER_NAME", "riakkv")
-                .withLabel("com.basho.riak.cluster.name", "riak-kv")
+                .withEnv("CLUSTER_NAME", "riakts")
+                .withEnv("WAIT_FOR_ERLANG", "1000")
+                .withLabel("com.basho.riak.cluster.name", "riakts")
                 .waitingFor(new WaitAllStrategy()
                         .withStartupTimeout(Duration.ofMinutes(2)))) {
             return container;
