@@ -7,6 +7,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.time.Duration;
+import java.util.UUID;
 
 public class RiakContainerExtension implements BeforeAllCallback, AfterAllCallback {
 
@@ -17,6 +18,10 @@ public class RiakContainerExtension implements BeforeAllCallback, AfterAllCallba
         riak = new GenericContainer("basho/riak-kv")
                 .withExposedPorts(8098, 8087)
                 .withPrivilegedMode(true)
+                .withNetworkAliases("riak-kv-" + UUID.randomUUID())
+                .withEnv("CLUSTER_NAME", "riakts")
+                .withEnv("WAIT_FOR_ERLANG", "1000")
+                .withLabel("com.basho.riak.cluster.name", "riakts")
                 .waitingFor(new WaitAllStrategy()
                         .withStartupTimeout(Duration.ofMinutes(2)));
 
