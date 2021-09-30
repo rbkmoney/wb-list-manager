@@ -1,11 +1,12 @@
 package com.rbkmoney.wb.list.manager;
 
 import com.rbkmoney.damsel.wb_list.*;
-import com.rbkmoney.testcontainers.annotations.KafkaSpringBootTest;
 import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumerConfig;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducer;
-import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducerConfig;
+import com.rbkmoney.wb.list.manager.extension.RiakTestcontainerExtension;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
 import org.apache.thrift.TBase;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,10 +32,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.testcontainers.shaded.com.trilead.ssh2.ChannelCondition.TIMEOUT;
 
-@ExtendWith({RiakContainerExtension.class})
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@KafkaSpringBootTest
+@ExtendWith({RiakTestcontainerExtension.class})
 @KafkaTestcontainer(topicsKeys = {"kafka.wblist.topic.command", "kafka.wblist.topic.event.sink"})
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@ContextConfiguration(
+        classes = {
+                WbListManagerApplication.class,
+                KafkaProducerConfig.class,
+                KafkaConsumerConfig.class})
 public class WbListManagerApplicationTest {
 
     public static final String IDENTITY_ID = "identityId";
