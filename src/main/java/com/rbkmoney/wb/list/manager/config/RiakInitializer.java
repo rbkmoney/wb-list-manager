@@ -20,6 +20,5 @@ public class RiakInitializer {
     public void onStartup() {
         log.info("Starting RiakCluster");
         riakCluster.start();
-
     }
 }

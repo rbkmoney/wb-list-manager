@@ -5,7 +5,7 @@ import com.basho.riak.client.api.commands.kv.FetchValue;
 import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
-import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
+import com.rbkmoney.wb.list.manager.extension.RiakTestcontainerExtension;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -21,8 +20,8 @@ import java.util.concurrent.ExecutionException;
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(RiakTestcontainerExtension.class)
 @SpringBootTest
-@ExtendWith({SpringExtension.class, RiakContainerExtension.class})
 public class RiakTest {
 
     private static final String VALUE = "value";
@@ -38,7 +37,7 @@ public class RiakTest {
     private RiakClient client;
 
     @Test
-    void riakTest() throws ExecutionException, InterruptedException {
+    public void riakTest() throws ExecutionException, InterruptedException {
         sleep(10000);
 
         Row row = new Row();
@@ -64,5 +63,4 @@ public class RiakTest {
         obj = response.getValue(RiakObject.class);
         assertNull(obj);
     }
-
 }

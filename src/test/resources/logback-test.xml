@@ -2,10 +2,19 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
-
-    <root level="INFO">
+    <root level="info">
         <appender-ref ref="CONSOLE"/>
     </root>
-    <logger name="com.rbkmoney.woody" level="ALL"/>
-    <logger name="com.rbkmoney.wb" level="ALL"/>
+    <logger name="com.rbkmoney.wb.list.manager">
+        <level value="info"/>
+    </logger>
+    <logger name="org.apache.kafka">
+        <level value="warn"/>
+    </logger>
+    <logger name="org.springframework.boot.test.context">
+        <level value="warn"/>
+    </logger>
+    <logger name="org.springframework.test.context">
+        <level value="warn"/>
+    </logger>
 </configuration>
