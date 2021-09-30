@@ -39,7 +39,7 @@ public class RiakTest {
 
     @Test
     void riakTest() throws ExecutionException, InterruptedException {
-        sleep(10000);
+        sleep(20000);
 
         Row row = new Row();
         row.setKey(KEY);

@@ -3,6 +3,8 @@ package com.rbkmoney.wb.list.manager;
 import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.testcontainers.annotations.KafkaSpringBootTest;
 import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducer;
 import com.rbkmoney.wb.list.manager.extension.RiakContainerExtension;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
@@ -52,11 +54,10 @@ public class WbListManagerApplicationTest {
     int serverPort;
 
     @Autowired
-    private com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducer<TBase<?, ?>> testThriftKafkaProducer;
+    private KafkaProducer<TBase<?, ?>> testThriftKafkaProducer;
 
     @Autowired
-    private com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer<Event>
-            testCommandKafkaConsumer;
+    private KafkaConsumer<Event> testCommandKafkaConsumer;
 
     private WbListServiceSrv.Iface handler;
 
