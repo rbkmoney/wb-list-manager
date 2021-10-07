@@ -1,43 +1,46 @@
 package com.rbkmoney.wb.list.manager;
 
 import com.rbkmoney.damsel.wb_list.*;
-import com.rbkmoney.wb.list.manager.serializer.EventDeserializer;
+import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumerConfig;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducer;
+import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducerConfig;
+import com.rbkmoney.wb.list.manager.extension.RiakTestcontainerExtension;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.rnorth.ducttape.unreliables.Unreliables;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.net.URI;
-import java.time.Duration;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.testcontainers.shaded.com.trilead.ssh2.ChannelCondition.TIMEOUT;
 
-@Slf4j
-@RunWith(SpringRunner.class)
+@ExtendWith({RiakTestcontainerExtension.class})
+@KafkaTestcontainer(topicsKeys = {"kafka.wblist.topic.command", "kafka.wblist.topic.event.sink"})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ContextConfiguration(classes = WbListManagerApplication.class)
-public class WbListManagerApplicationTest extends KafkaAbstractTest {
+@ContextConfiguration(
+        classes = {
+                WbListManagerApplication.class,
+                KafkaProducerConfig.class,
+                KafkaConsumerConfig.class})
+public class WbListManagerApplicationTest {
 
     public static final String IDENTITY_ID = "identityId";
     private static final String VALUE = "value";
@@ -56,194 +59,155 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
     @LocalServerPort
     int serverPort;
 
-    @Value("${riak.bucket}")
-    private String bucketName;
+    @Autowired
+    private KafkaProducer<TBase<?, ?>> testThriftKafkaProducer;
 
-    public static Consumer<String, Event> createConsumer() {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "CLIENT");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, EventDeserializer.class);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-        return new KafkaConsumer<>(props);
-    }
+    @Autowired
+    private KafkaConsumer<Event> testCommandKafkaConsumer;
 
-    @Test
-    public void kafkaRowTest() throws Exception {
+    private WbListServiceSrv.Iface handler;
+
+    @BeforeEach
+    void setUp() throws URISyntaxException {
         THClientBuilder clientBuilder = new THClientBuilder()
                 .withAddress(new URI(String.format(SERVICE_URL, serverPort)))
                 .withNetworkTimeout(300000);
-        WbListServiceSrv.Iface iface = clientBuilder.build(WbListServiceSrv.Iface.class);
+        handler = clientBuilder.build(WbListServiceSrv.Iface.class);
+    }
 
-        ChangeCommand changeCommand = produceCreateRow(createRow());
+    @Test
+    void kafkaStreamsTest() throws Exception {
+        Row testRow = TestObjectFactory.testRow();
+        ChangeCommand changeCommand = produceCreateRow(testRow);
 
-        boolean exist = iface.isExist(changeCommand.getRow());
+        boolean exist = handler.isExist(changeCommand.getRow());
+
         assertTrue(exist);
+
 
         produceDeleteRow(changeCommand);
 
-        exist = iface.isExist(changeCommand.getRow());
+        exist = handler.isExist(changeCommand.getRow());
+
         assertFalse(exist);
 
-        Consumer<String, Event> consumer = createConsumer();
-        consumer.subscribe(Collections.singletonList(topicEventSink));
 
         List<Event> eventList = new ArrayList<>();
-        ConsumerRecords<String, Event> consumerRecords =
-                consumer.poll(Duration.ofSeconds(1));
-        consumerRecords.forEach(record -> {
-            log.info("poll message: {}", record.value());
-            eventList.add(record.value());
-        });
-        consumer.close();
+        testCommandKafkaConsumer.read(topicEventSink, data -> eventList.add(data.value()));
+        Unreliables.retryUntilTrue(TIMEOUT, TimeUnit.SECONDS, () -> eventList.size() == 2);
 
-        assertEquals(2, eventList.size());
+        assertTrue(eventList.stream()
+                .map(Event::getRow)
+                .anyMatch(row -> row.getPartyId().equals(testRow.getPartyId())));
+    }
 
-        Producer<String, ChangeCommand> producer = createProducer();
+    @Test
+    void kafkaRowTest() throws Exception {    // TODO refactoring
         Row row = createRowOld();
-        changeCommand = createCommand(row);
+        ChangeCommand changeCommand = createCommand(row);
         row.setShopId(null);
-
-        ProducerRecord<String, ChangeCommand> producerRecord =
-                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producer.send(producerRecord).get();
-        producer.close();
+        testThriftKafkaProducer.send(topic, changeCommand);
         Thread.sleep(1000L);
 
-        exist = iface.isExist(row);
+        boolean exist = handler.isExist(row);
+
         assertTrue(exist);
+
 
         row.setShopId(SHOP_ID);
 
-        exist = iface.isExist(row);
+        exist = handler.isExist(row);
+
         assertTrue(exist);
 
-        Result info = iface.getRowInfo(row);
+
+        Result info = handler.getRowInfo(row);
+
         assertFalse(info.isSetRowInfo());
 
-        row.setListType(ListType.grey);
 
+        row.setListType(ListType.grey);
         //check without partyId and shop id
-        createRow(Instant.now().toString(), null, null);
-        RowInfo rowInfo = iface.getRowInfo(row).getRowInfo();
+        Row testRow = createRow(Instant.now().toString());
+        RowInfo rowInfo = handler.getRowInfo(testRow).getRowInfo();
+
         assertEquals(5, rowInfo.getCountInfo().getCount());
+
 
         //check without partyId
-        createRow(Instant.now().toString(), null, SHOP_ID);
-        rowInfo = iface.getRowInfo(row).getRowInfo();
+        createRow(Instant.now().toString());
+        rowInfo = handler.getRowInfo(row).getRowInfo();
+
         assertEquals(5, rowInfo.getCountInfo().getCount());
+
 
         //check full key field
-        createRow(Instant.now().toString(), PARTY_ID, SHOP_ID);
-        rowInfo = iface.getRowInfo(row).getRowInfo();
+        createRow(Instant.now().toString());
+        rowInfo = handler.getRowInfo(row).getRowInfo();
+
         assertEquals(5, rowInfo.getCountInfo().getCount());
 
-        rowInfo = checkCreateWithCountInfo(iface, Instant.now().toString(), PARTY_ID, SHOP_ID);
+
+        rowInfo = checkCreateWithCountInfo(handler, Instant.now().toString());
 
         assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
 
+
         Row rowP2p = createListRow();
         rowP2p.setId(IdInfo.p2p_id(new P2pId().setIdentityId(IDENTITY_ID)));
-
         changeCommand = produceCreateRow(rowP2p);
 
-        exist = iface.isExist(changeCommand.getRow());
+        exist = handler.isExist(changeCommand.getRow());
+
         assertTrue(exist);
+
 
         produceDeleteRow(changeCommand);
 
-        exist = iface.isExist(changeCommand.getRow());
+        exist = handler.isExist(changeCommand.getRow());
+
         assertFalse(exist);
     }
 
-    private void produceDeleteRow(ChangeCommand changeCommand)
-            throws InterruptedException, java.util.concurrent.ExecutionException {
-        Producer<String, ChangeCommand> producer = createProducer();
-        changeCommand.setCommand(Command.DELETE);
-        ProducerRecord<String, ChangeCommand> producerRecord =
-                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producer.send(producerRecord).get();
-        producer.close();
+    private Row createRow(String startTimeCount) throws InterruptedException {
+        ChangeCommand changeCommand;
+        Row rowWithCountInfo = createRowWithCountInfo(startTimeCount);
+        changeCommand = createCommand(rowWithCountInfo);
+        testThriftKafkaProducer.send(topic, changeCommand);
         Thread.sleep(1000L);
+        return rowWithCountInfo;
     }
 
-    private ChangeCommand produceCreateRow(com.rbkmoney.damsel.wb_list.Row row)
-            throws InterruptedException, java.util.concurrent.ExecutionException {
-        Producer<String, ChangeCommand> producer = createProducer();
+    private ChangeCommand produceCreateRow(Row row)
+            throws InterruptedException {
         ChangeCommand changeCommand = createCommand(row);
-        ProducerRecord<String, ChangeCommand> producerRecord =
-                new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producer.send(producerRecord).get();
-        producer.close();
+        testThriftKafkaProducer.send(topic, changeCommand);
         Thread.sleep(1000L);
         return changeCommand;
     }
 
-    private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount, String partyId,
-                                             String shopId)
-            throws InterruptedException, java.util.concurrent.ExecutionException, TException {
-        Row rowWithCountInfo = createRow(startTimeCount, partyId, shopId);
-        return iface.getRowInfo(rowWithCountInfo).getRowInfo();
-    }
-
-    private Row createRow(String startTimeCount, String partyId, String shopId)
-            throws InterruptedException, java.util.concurrent.ExecutionException {
-        Producer<String, ChangeCommand> producer;
-        ChangeCommand changeCommand;
-        ProducerRecord<String, ChangeCommand> producerRecord;
-        producer = createProducer();
-        Row rowWithCountInfo = createRowWithCountInfo(startTimeCount, partyId, shopId);
-        changeCommand = createCommand(rowWithCountInfo);
-        producerRecord = new ProducerRecord<>(topic, changeCommand.getRow().getValue(), changeCommand);
-        producer.send(producerRecord).get();
-        producer.close();
+    private void produceDeleteRow(ChangeCommand changeCommand)
+            throws InterruptedException {
+        changeCommand.setCommand(Command.DELETE);
+        testThriftKafkaProducer.send(topic, changeCommand);
         Thread.sleep(1000L);
-
-        return rowWithCountInfo;
     }
 
-    @NotNull
-    private com.rbkmoney.damsel.wb_list.Row createRow() {
-        Row row = createListRow();
-        row.setId(IdInfo.payment_id(new PaymentId()
+    private Row createRowOld() {
+        return createListRow()
                 .setShopId(SHOP_ID)
-                .setPartyId(PARTY_ID)
-        ));
-        return row;
+                .setPartyId(PARTY_ID);
     }
 
-    @NotNull
-    private ChangeCommandWrapper createCommand(com.rbkmoney.damsel.wb_list.Row row) {
+    private ChangeCommandWrapper createCommand(Row row) {
         ChangeCommandWrapper changeCommand = new ChangeCommandWrapper();
         changeCommand.setCommand(Command.CREATE);
         changeCommand.setRow(row);
         return changeCommand;
     }
 
-
-    @NotNull
-    private com.rbkmoney.damsel.wb_list.Row createRowOld() {
-        Row row = createListRow()
-                .setShopId(SHOP_ID)
-                .setPartyId(PARTY_ID);
-        return row;
-    }
-
-    @NotNull
-    private Row createListRow() {
+    private Row createRowWithCountInfo(String startTimeCount) {
         Row row = new Row();
-        row.setListName(LIST_NAME);
-        row.setListType(ListType.black);
-        row.setValue(VALUE);
-        return row;
-    }
-
-    @NotNull
-    private com.rbkmoney.damsel.wb_list.Row createRowWithCountInfo(String startTimeCount, String partyId,
-                                                                   String shopId) {
-        com.rbkmoney.damsel.wb_list.Row row = new com.rbkmoney.damsel.wb_list.Row();
         row.setId(IdInfo.payment_id(new PaymentId()
                 .setShopId(SHOP_ID)
                 .setPartyId(PARTY_ID)
@@ -257,6 +221,20 @@ public class WbListManagerApplicationTest extends KafkaAbstractTest {
                         .setStartCountTime(startTimeCount)
                         .setTimeToLive(Instant.now().plusSeconds(6000L).toString()))
         );
+        return row;
+    }
+
+    private RowInfo checkCreateWithCountInfo(WbListServiceSrv.Iface iface, String startTimeCount)
+            throws InterruptedException, TException {
+        Row rowWithCountInfo = createRow(startTimeCount);
+        return iface.getRowInfo(rowWithCountInfo).getRowInfo();
+    }
+
+    private Row createListRow() {
+        Row row = new Row();
+        row.setListName(LIST_NAME);
+        row.setListType(ListType.black);
+        row.setValue(VALUE);
         return row;
     }
 

@@ -22,7 +22,7 @@ public class KafkaConfig {
     private static final String CLIENT_ID = "wb-list-client";
     private static final String PKCS_12 = "PKCS12";
 
-    @Value("${kafka.bootstrap.servers}")
+    @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
     @Value("${kafka.ssl.server-password}")
     private String serverStorePassword;

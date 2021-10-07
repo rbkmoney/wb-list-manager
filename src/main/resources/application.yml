@@ -26,7 +26,6 @@ management:
     web:
       exposure:
         include: health,info,prometheus
----
 spring:
   application:
     name: '@project.name@'
@@ -43,10 +42,11 @@ retry:
   max.attempts: 3
 
 kafka:
-  bootstrap.servers: "localhost:29092"
-  wblist.topic:
-    command: "wb-list-command"
-    event.sink: "wb-list-event-sink"
+  bootstrap-servers: "localhost:29092"
+  wblist:
+    topic:
+      command: "wb-list-command"
+      event.sink: "wb-list-event-sink"
   ssl:
     enable: false
     keystore-location: src/main/resources/cert/kenny-k.struzhkin.p12

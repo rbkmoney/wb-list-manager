@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbkmoney.damsel.wb_list.*;
 import com.rbkmoney.wb.list.manager.constant.RowType;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
-import com.rbkmoney.wb.list.manager.exception.UnknownRowTypeException;
 import com.rbkmoney.wb.list.manager.model.CountInfoModel;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
 import com.rbkmoney.wb.list.manager.utils.KeyGenerator;
@@ -27,7 +26,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     public boolean isExist(Row row) throws TException {
         try {
             return getCascadeRow(row).isPresent();
-        } catch (RiakExecutionException | UnknownRowTypeException e) {
+        } catch (RiakExecutionException e) {
             log.error("WbListServiceHandler error when isExist row: {} e: ", row, e);
             throw new TException(e);
         }
@@ -63,7 +62,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
     }
 
     @Override
-    public Result getRowInfo(Row row) throws ListNotFound, TException {
+    public Result getRowInfo(Row row) {
         log.info("WbListServiceHandler getRowInfo row: {}", row);
         Optional<com.rbkmoney.wb.list.manager.model.Row> result = getCascadeRow(row);
         if (result.isPresent() && row.getListType() == ListType.grey) {

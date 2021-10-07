@@ -22,10 +22,8 @@ public class RiakConfig {
                 .withRemoteAddress(riakAddress)
                 .withRemotePort(riakPort)
                 .build();
-        RiakCluster cluster = new RiakCluster.Builder(node)
+        return new RiakCluster.Builder(node)
                 .build();
-        cluster.start();
-        return cluster;
     }
 
     @Bean
