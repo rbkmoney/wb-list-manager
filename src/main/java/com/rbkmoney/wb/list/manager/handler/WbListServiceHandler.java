@@ -2,7 +2,6 @@ package com.rbkmoney.wb.list.manager.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbkmoney.damsel.wb_list.*;
-import com.rbkmoney.wb.list.manager.constant.RowType;
 import com.rbkmoney.wb.list.manager.exception.RiakExecutionException;
 import com.rbkmoney.wb.list.manager.model.CountInfoModel;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
@@ -88,9 +87,7 @@ public class WbListServiceHandler implements WbListServiceSrv.Iface {
             return cascadeGetRow(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(),
                     paymentId.getShopId());
         } else if (row.isSetId() && row.getId().isSetP2pId()) {
-            P2pId p2pId = row.getId().getP2pId();
-            return cascadeGetRow(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P,
-                    p2pId.getIdentityId());
+            throw new IllegalStateException("P2P is not supported. Row: " + row);
         }
         return cascadeGetRow(row.list_type, row.list_name, row.value, row.getPartyId(), row.getShopId());
     }

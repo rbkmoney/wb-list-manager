@@ -1,5 +1,6 @@
 package com.rbkmoney.wb.list.manager.stream;
 
+import com.rbkmoney.damsel.wb_list.ChangeCommand;
 import com.rbkmoney.wb.list.manager.serializer.CommandSerde;
 import com.rbkmoney.wb.list.manager.serializer.EventSerde;
 import com.rbkmoney.wb.list.manager.service.CommandService;
@@ -36,7 +37,7 @@ public class WbListStreamFactory {
         try {
             StreamsBuilder builder = new StreamsBuilder();
             builder.stream(readTopic, Consumed.with(Serdes.String(), commandSerde))
-                    .filter((s, changeCommand) -> changeCommand != null && changeCommand.getCommand() != null)
+                    .filter((s, changeCommand) -> hasChangeCommand(changeCommand) && isNotP2P(changeCommand))
                     .peek((s, changeCommand) -> log.info("Command stream check command: {}", changeCommand))
                     .mapValues(command ->
                             retryTemplate.execute(args -> commandService.apply(command)))
@@ -46,6 +47,15 @@ public class WbListStreamFactory {
             log.error("WbListStreamFactory error when create stream e: ", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean hasChangeCommand(ChangeCommand changeCommand) {
+        return changeCommand != null && changeCommand.getCommand() != null;
+    }
+
+    private boolean isNotP2P(ChangeCommand changeCommand) {
+        return changeCommand.getRow() != null
+                && (!changeCommand.getRow().isSetId() || !changeCommand.getRow().getId().isSetP2pId());
     }
 
 }

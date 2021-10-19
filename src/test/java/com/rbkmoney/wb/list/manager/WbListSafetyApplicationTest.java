@@ -45,8 +45,7 @@ public class WbListSafetyApplicationTest {
 
         testThriftKafkaProducer.send(topic, changeCommand);
 
-        Thread.sleep(2000L);
-        verify(listRepository, times(3)).create(any());
+        verify(listRepository, timeout(2000L).times(3)).create(any());
     }
 
 }
