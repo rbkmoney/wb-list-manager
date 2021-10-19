@@ -153,9 +153,10 @@ public class WbListManagerApplicationTest {
         exist = handler.isExist(changeCommand.getRow());
 
         assertFalse(exist);
+    }
 
-
-        // p2p
+    @Test
+    public void kafkaRowP2PTest() throws InterruptedException {
         Row rowP2p = createListRow();
         rowP2p.setId(IdInfo.p2p_id(new P2pId().setIdentityId(IDENTITY_ID)));
         ChangeCommand p2pChangeCommand = produceCreateRow(rowP2p);

@@ -37,7 +37,7 @@ public class WbListStreamFactory {
         try {
             StreamsBuilder builder = new StreamsBuilder();
             builder.stream(readTopic, Consumed.with(Serdes.String(), commandSerde))
-                    .filter((s, changeCommand) -> hasChangeCommand(changeCommand) && isNotP2P(changeCommand))
+                    .filter((s, changeCommand) -> hasChangeCommand(changeCommand) && !isP2P(changeCommand))
                     .peek((s, changeCommand) -> log.info("Command stream check command: {}", changeCommand))
                     .mapValues(command ->
                             retryTemplate.execute(args -> commandService.apply(command)))
@@ -53,9 +53,10 @@ public class WbListStreamFactory {
         return changeCommand != null && changeCommand.getCommand() != null;
     }
 
-    private boolean isNotP2P(ChangeCommand changeCommand) {
+    private boolean isP2P(ChangeCommand changeCommand) {
         return changeCommand.getRow() != null
-                && (!changeCommand.getRow().isSetId() || !changeCommand.getRow().getId().isSetP2pId());
+                && changeCommand.getRow().isSetId()
+                && changeCommand.getRow().getId().isSetP2pId();
     }
 
 }
