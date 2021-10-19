@@ -1,9 +1,7 @@
 package com.rbkmoney.wb.list.manager.utils;
 
 import com.rbkmoney.damsel.wb_list.ListType;
-import com.rbkmoney.damsel.wb_list.P2pId;
 import com.rbkmoney.damsel.wb_list.PaymentId;
-import com.rbkmoney.wb.list.manager.constant.RowType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
@@ -19,9 +17,7 @@ public class KeyGenerator {
             return generateKey(row.getListType(), row.getListName(), row.getValue(), paymentId.getPartyId(),
                     paymentId.getShopId());
         } else if (row.isSetId() && row.getId().isSetP2pId()) {
-            P2pId p2pId = row.getId().getP2pId();
-            return generateKey(row.getListType(), row.getListName(), row.getValue(), RowType.P_2_P,
-                    p2pId.getIdentityId());
+            throw new IllegalStateException("P2P is not supported. Row: " + row);
         }
         return generateKey(row.getListType(), row.getListName(), row.getValue(), row.getPartyId(), row.getShopId());
     }

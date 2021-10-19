@@ -5,9 +5,11 @@ import com.basho.riak.client.api.commands.kv.FetchValue;
 import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
+import com.rbkmoney.wb.list.manager.extension.AwaitilityExtension;
 import com.rbkmoney.wb.list.manager.extension.RiakTestcontainerExtension;
 import com.rbkmoney.wb.list.manager.model.Row;
 import com.rbkmoney.wb.list.manager.repository.ListRepository;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +18,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
-import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(RiakTestcontainerExtension.class)
+@ExtendWith({RiakTestcontainerExtension.class, AwaitilityExtension.class})
 @SpringBootTest
 public class RiakTest {
 
@@ -38,12 +40,17 @@ public class RiakTest {
 
     @Test
     void riakTest() throws ExecutionException, InterruptedException {
-        sleep(20000);
-
         Row row = new Row();
         row.setKey(KEY);
         row.setValue(VALUE);
-        listRepository.create(row);
+        Awaitility.await()
+                .pollDelay(5_000L, TimeUnit.MILLISECONDS)
+                .atMost(20_000L, TimeUnit.MILLISECONDS)
+                .ignoreExceptions()
+                .until(() -> {
+                    listRepository.create(row);
+                    return listRepository.get(KEY).isPresent();
+                });
 
         Namespace ns = new Namespace(bucketName);
         Location location = new Location(ns, KEY);

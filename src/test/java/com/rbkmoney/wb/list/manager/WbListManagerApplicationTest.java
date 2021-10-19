@@ -6,11 +6,14 @@ import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumerConfig;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducer;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaProducerConfig;
+import com.rbkmoney.wb.list.manager.extension.AwaitilityExtension;
 import com.rbkmoney.wb.list.manager.extension.RiakTestcontainerExtension;
 import com.rbkmoney.wb.list.manager.utils.ChangeCommandWrapper;
+import com.rbkmoney.woody.api.flow.error.WRuntimeException;
 import com.rbkmoney.woody.thrift.impl.http.THClientBuilder;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.testcontainers.shaded.com.trilead.ssh2.ChannelCondition.TIMEOUT;
 
-@ExtendWith({RiakTestcontainerExtension.class})
+@ExtendWith({RiakTestcontainerExtension.class, AwaitilityExtension.class})
 @KafkaTestcontainer(topicsKeys = {"kafka.wblist.topic.command", "kafka.wblist.topic.event.sink"})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ContextConfiguration(
@@ -44,7 +47,6 @@ public class WbListManagerApplicationTest {
 
     public static final String IDENTITY_ID = "identityId";
     private static final String VALUE = "value";
-    private static final String KEY = "key";
     private static final String SHOP_ID = "shopId";
     private static final String PARTY_ID = "partyId";
     private static final String LIST_NAME = "listName";
@@ -79,15 +81,12 @@ public class WbListManagerApplicationTest {
     void kafkaStreamsTest() throws Exception {
         Row testRow = TestObjectFactory.testRow();
         ChangeCommand changeCommand = produceCreateRow(testRow);
-
-        boolean exist = handler.isExist(changeCommand.getRow());
-
-        assertTrue(exist);
-
+        Awaitility.await()
+                .until(() -> handler.isExist(changeCommand.getRow()));
 
         produceDeleteRow(changeCommand);
 
-        exist = handler.isExist(changeCommand.getRow());
+        boolean exist = handler.isExist(changeCommand.getRow());
 
         assertFalse(exist);
 
@@ -107,16 +106,13 @@ public class WbListManagerApplicationTest {
         ChangeCommand changeCommand = createCommand(row);
         row.setShopId(null);
         testThriftKafkaProducer.send(topic, changeCommand);
-        Thread.sleep(1000L);
-
-        boolean exist = handler.isExist(row);
-
-        assertTrue(exist);
+        Awaitility.await()
+                .until(() -> handler.isExist(changeCommand.getRow()));
 
 
         row.setShopId(SHOP_ID);
 
-        exist = handler.isExist(row);
+        boolean exist = handler.isExist(row);
 
         assertTrue(exist);
 
@@ -153,20 +149,21 @@ public class WbListManagerApplicationTest {
         assertFalse(rowInfo.getCountInfo().getStartCountTime().isEmpty());
 
 
-        Row rowP2p = createListRow();
-        rowP2p.setId(IdInfo.p2p_id(new P2pId().setIdentityId(IDENTITY_ID)));
-        changeCommand = produceCreateRow(rowP2p);
-
-        exist = handler.isExist(changeCommand.getRow());
-
-        assertTrue(exist);
-
-
         produceDeleteRow(changeCommand);
-
         exist = handler.isExist(changeCommand.getRow());
 
         assertFalse(exist);
+    }
+
+    @Test
+    public void kafkaRowP2PTest() throws InterruptedException {
+        Row rowP2p = createListRow();
+        rowP2p.setId(IdInfo.p2p_id(new P2pId().setIdentityId(IDENTITY_ID)));
+        ChangeCommand p2pChangeCommand = produceCreateRow(rowP2p);
+        assertThrows(WRuntimeException.class, () -> handler.isExist(p2pChangeCommand.getRow()));
+
+        produceDeleteRow(p2pChangeCommand);
+        assertThrows(WRuntimeException.class, () -> handler.isExist(p2pChangeCommand.getRow()));
     }
 
     private Row createRow(String startTimeCount) throws InterruptedException {
